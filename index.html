@@ -29,6 +29,7 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:60
 .err{color:var(--warn);font-size:13px;margin:0}
 h2{margin:0;font-size:20px;font-weight:700}
 .ct{font-size:18px}
+.ct-or{color:var(--brass)}
 
 /* test strip */
 .strip{background:var(--strip);color:var(--strip-ink);font-size:13px}
@@ -487,7 +488,7 @@ async function addGallery(files){const uid=S.current,u=S.users[uid];if(!u)return
 function thumbs(o){const g=galleryOf(o);if(!g.length)return "";const show=g.slice(0,5);
   return `<div class="thumbs">${show.map((p,k)=>`<button class="thumb" data-act="viewPhotos" data-id="${esc(o.id)}" data-i="${k}" aria-label="Open photo ${k+1} of ${esc(o.name)}"><img src="${p}" alt="">${k===4&&g.length>5?`<span class="more">+${g.length-5}</span>`:""}</button>`).join("")}</div>`;}
 function galleryCard(u){const g=u.gallery||[];
-  return `<div class="card"><div class="toggle"><h2 class="ct">Photos</h2><span class="fine">${g.length} of ${MAX_GAL}</span></div>
+  return `<div class="card"><div class="toggle"><h2 class="ct ct-or">Photos</h2><span class="fine">${g.length} of ${MAX_GAL}</span></div>
     <p class="fine">Only people you've reconnected with can see these. Requests show just your profile photo.</p>
     <div class="gal">${g.map((p,i)=>safePhoto(p)?`<div class="gal-item"><button class="gal-open" data-act="viewPhotos" data-id="${esc(u.id)}" data-i="${i}" aria-label="Open photo ${i+1}"><img src="${safePhoto(p)}" alt=""></button><button class="gal-del" data-act="delGal" data-i="${i}" aria-label="Remove photo ${i+1}">${ic("x",16)}</button></div>`:"").join("")}
       ${g.length<MAX_GAL?`<label class="gal-add" for="gal_add">${ic("plus",24)}<span>Add photos</span></label>`:""}</div>
@@ -853,7 +854,7 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
 
   ${galleryCard(u)}
 
-  <div class="card"><h2 class="ct">About you</h2>
+  <div class="card"><h2 class="ct ct-or">About you</h2>
     <label class="f" for="me_name">Full name<input id="me_name" value="${esc(u.name)}" placeholder="First and last name"></label>
     ${u.name&&!parts(u.name).last?`<p class="err">${ic("shield",14)} Add your last name. People search for first and last names, so without it nobody can find you.</p>`:""}
     <label class="f" for="me_past">Maiden name, past names and nicknames<input id="me_past" value="${esc(past.join(", "))}" placeholder="Maiden name, nickname, old spelling"></label>
@@ -870,7 +871,7 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
     <p class="fine">${ic("lock",14)} Your birth date and gender are private. They're only used to confirm you're 18 or older and are never shown to anyone.</p>
     <div class="hist-actions"><span class="saved-note" id="me_saved"${S.savedMe?"":" hidden"}>${ic("check",16)}Saved</span><span class="fine" id="me_dirty" hidden>Unsaved changes</span><button class="save-btn" data-act="saveMe" id="me_save" disabled>Save</button></div></div>
 
-  <div class="card"><h2 class="ct">Where people knew you</h2>
+  <div class="card"><h2 class="ct ct-or">Where people knew you</h2>
     <div class="hist">${(u.history||[]).map((h,i)=>`<div class="hist-row"><p class="hist-num">Place ${i+1}</p>
       <label class="f" for="h_place_${i}">Place and details<input id="h_place_${i}" data-h="${i}" data-f="place" value="${esc(h.place)}" placeholder="e.g. Humber College, film program"><span class="${kwClass(h.place)}" id="kw_h_${i}" aria-live="polite">${kwLeft(h.place)}</span></label>
       <label class="f hc" for="h_city_${i}">City or town<input id="h_city_${i}" data-h="${i}" data-f="city" value="${esc(h.city)}" placeholder="e.g. Toronto"></label>
@@ -883,12 +884,12 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
     <button class="grey" data-act="addHist" style="align-self:flex-start">Add a place</button>
     <p class="fine"><button class="link inline" data-tab="example">See an example</button> · Add other names too, like a nickname, campus or department. Someone can reach you only if one word matches and the city matches too (plus the years, when you've both added them).</p></div>
 
-  <div class="card"><h2 class="ct">Privacy and safety</h2>
+  <div class="card"><h2 class="ct ct-or">Privacy and safety</h2>
     <div class="toggle"><div><b>Signed up</b><p class="fine">${u.joined?"People who list you with a matching history can send you a request.":"No one can find you."}</p></div><button class="switch" role="switch" aria-checked="${!!u.joined}" aria-label="Signed up" data-act="${u.joined?"leave":"join"}"></button></div>
     <div class="toggle"><div><b>Pause being found</b><p class="fine">Keep your account but stop all new requests.</p></div><button class="switch" role="switch" aria-checked="${!!u.paused}" aria-label="Pause being found" data-act="pause"></button></div>
     ${(u.blocked||[]).length?`<b>Blocked</b>`+u.blocked.map(id=>S.users[id]?`<div class="toggle"><span>${esc(S.users[id].name)}</span><button class="link" data-act="unblock" data-id="${esc(id)}">Unblock</button></div>`:"").join(""):""}</div>
 
-  <div class="card"><h2 class="ct">Delete my profile</h2>
+  <div class="card"><h2 class="ct ct-or">Delete my profile</h2>
     ${S.confirmDelMe===2?`<div class="notice danger">${ic("trash",18)}<div class="col-tight"><b>Last check: this deletes everything</b>
       <span>Your profile, photos, places, list, requests, questions, messages and connections will be gone for good. There's no way to get them back.</span>
       <label class="f" for="del_type">Type DELETE to confirm<input id="del_type" autocomplete="off" autocapitalize="characters" placeholder="DELETE"></label>
