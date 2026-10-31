@@ -30,6 +30,8 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:60
 h2{margin:0;font-size:20px;font-weight:700}
 .ct{font-size:18px}
 .ct-or{color:var(--brass)}
+.ask-btn{width:100%;background:var(--brand-soft);color:var(--brand);border:1.5px solid var(--brand);font-weight:600;padding:10px 14px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.ask-btn:hover{background:var(--hover)}
 
 /* test strip */
 .strip{background:var(--strip);color:var(--strip-ink);font-size:13px}
@@ -734,7 +736,7 @@ function requests(){const u=me();const inb=inbox(u.id),conf=toConfirm(u.id);
     ${(()=>{const k=p.id+"|"+u.id,t=qThread(k),mine=t.filter(m=>m.from===u.id).length,waiting=t.length&&t[t.length-1].from===u.id;
       let q=qaView(k,u.id);
       if(S.qOpen===k||t.length)q+=qaInput(k,"qAsk",!t.length?"Ask something only they would know…":waiting?"Add something…":"Reply or ask something else…")+`<p class="fine">${waiting?`${ic("chat",14)} Waiting for their answer. You can add more, or decide any time.`:`Not sure yet? Ask something only they'd know, that wouldn't be on Facebook or LinkedIn. A right answer helps, but it isn't proof. They won't see your name or photo, only that you haven't decided.`}</p>`;
-      else q+=`<button class="link inline" style="align-self:center" data-act="qOpen" data-k="${esc(k)}">${ic("chat",14)} Not sure? Ask them a question first</button>`;
+      else q+=`<button class="ask-btn" data-act="qOpen" data-k="${esc(k)}">${ic("chat",18)}<span>Not sure? Ask them a question first</span></button>`;
       return q;})()}
     ${hasPhoto(u)?`<div class="btns"><button class="primary" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="accepted">Yes, I know them</button><button class="grey" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="ignored">Not now</button></div>`
       :`${photoNotice("Add a profile photo first, so they can check it's really you.","Add photo")}<div class="btns"><button class="grey" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="ignored">Not now</button></div>`}
