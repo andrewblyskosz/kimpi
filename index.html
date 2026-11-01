@@ -202,6 +202,9 @@ h2{margin:0;font-size:20px;font-weight:700}
 .notice.warn.mconf{background:var(--brass-soft);box-shadow:inset 0 0 0 1.5px var(--req-line)}
 .notice.warn.mconf>svg{color:var(--brass)}
 /* ---------- blue-glow, champagne-gold look ---------- */
+:root{--logo-or:#F3991E}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--logo-or:#F3A43A}}
+:root[data-theme="dark"]{--logo-or:#F3A43A}
 .ct-or,.card h2.ct-or{color:var(--head)}
 .tabs button[aria-selected="true"]::after{background:var(--bar-accent)}
 .cover{background:radial-gradient(rgba(170,200,230,.22) 1px,transparent 1.4px) 0 0/9px 9px,linear-gradient(180deg,#1B3A5C,#10253C)}
@@ -520,8 +523,8 @@ const years=h=>{if(!hasYears(h))return "years not given";const [a,b]=histSpan(h)
 const where=x=>esc(x.place)+(x.city?", "+esc(x.city):"");
 const firstName=u=>{const f=parts(u.name||"").first;return f?f[0].toUpperCase()+f.slice(1):"";};
 const wordmark=(cls,ink,acc,hole)=>`<svg class="${cls}" viewBox="25 85 2550 1050" role="img" aria-label="kimpi"><path d="M365 900 211 644 364 411H555L365 674L370 610L565 900ZM51 900V171H225V900Z M890 900V411H1064V900ZM1197 900V617Q1197 586 1178.0 568.5Q1159 551 1131 551Q1111 551 1096.0 559.0Q1081 567 1072.5 581.5Q1064 596 1064 617L996 590Q996 531 1022.0 489.0Q1048 447 1092.0 424.0Q1136 401 1192 401Q1242 401 1282.5 424.5Q1323 448 1347.0 490.0Q1371 532 1371 589V900ZM1504 900V617Q1504 586 1485.0 568.5Q1466 551 1438 551Q1419 551 1403.5 559.0Q1388 567 1379.5 581.5Q1371 596 1371 617L1269 612Q1271 546 1298.0 499.0Q1325 452 1372.5 426.5Q1420 401 1480 401Q1537 401 1582.0 425.0Q1627 449 1652.5 494.5Q1678 540 1678 603V900Z M2060 910Q2013 910 1973.0 893.0Q1933 876 1907.0 846.5Q1881 817 1875 778V540Q1881 501 1907.5 469.5Q1934 438 1973.5 419.5Q2013 401 2060 401Q2131 401 2185.0 433.5Q2239 466 2269.5 524.0Q2300 582 2300 656Q2300 729 2269.5 786.5Q2239 844 2185.0 877.0Q2131 910 2060 910ZM1769 1107V411H1943V534L1914 652L1939 771V1107ZM2027 755Q2056 755 2078.0 742.0Q2100 729 2112.0 706.5Q2124 684 2124 655Q2124 626 2112.0 604.0Q2100 582 2078.0 569.0Q2056 556 2028 556Q2001 556 1979.0 568.5Q1957 581 1945.0 603.5Q1933 626 1933 655Q1933 684 1945.0 706.5Q1957 729 1978.5 742.0Q2000 755 2027 755Z" style="fill:${ink}"/><path d="M614 900 V498.0 A87.0 87.0 0 0 1 788 498.0 V900 Z" style="fill:${ink}" transform="rotate(9 701.0 900)"/><path d="M2372 900 V498.0 A87.0 87.0 0 0 1 2546 498.0 V900 Z" style="fill:${ink}" transform="rotate(-9 2459.0 900)"/><path d="M800 278Q1580 -52 2360 278" fill="none" style="stroke:${acc}" stroke-width="44" stroke-linecap="round"/><circle cx="800" cy="278" r="74" style="fill:${hole};stroke:${acc}" stroke-width="38"/><circle cx="2360" cy="278" r="74" style="fill:${hole};stroke:${acc}" stroke-width="38"/></svg>`;
-const KITW=wordmark("wm-inline","var(--brand)","var(--brass)","var(--surface)");
-const LOGO=()=>wordmark("wm","var(--bar-ink)","var(--bar-accent)","var(--bar-bg)");
+const KITW=wordmark("wm-inline","var(--brand)","var(--logo-or)","var(--surface)");
+const LOGO=()=>wordmark("wm","var(--bar-ink)","#F3991E","var(--bar-bg)");
 
 /* clean-up of the old sample people (runs on every phone, and through sync) */
 const OLD_PLACES=["Etobicoke Collegiate","CBC Animation"];
