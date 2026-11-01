@@ -814,7 +814,7 @@ function requests(){const u=me();const inb=inbox(u.id),conf=toConfirm(u.id);
     <p class="fine">Saying yes shares your photo with them so they can confirm it's you. ${KITW} doesn't check anyone's identity, so only say yes if you want to hear from this person.</p>
     ${(()=>{const k=p.id+"|"+u.id,t=qThread(k),mine=t.filter(m=>m.from===u.id).length,waiting=t.length&&t[t.length-1].from===u.id;
       let q=qaView(k,u.id);
-      if(S.qOpen===k||t.length)q+=qaInput(k,"qAsk",!t.length?"Ask something only they would know…":waiting?"Add something…":"Reply or ask something else…")+`<p class="fine">${waiting?`${ic("chat",14)} Waiting for their answer. You can add more, or decide any time.`:`Not sure yet? Ask something only they'd know, that wouldn't be on Facebook or LinkedIn. A right answer helps, but it isn't proof. They won't see your name or photo, only that you haven't decided.`}</p>`;
+      if(S.qOpen===k||t.length)q+=qaInput(k,"qAsk",!t.length?"Ask something only they would know…":waiting?"Add something…":"Reply or ask something else…")+`<p class="fine">${waiting?`${ic("chat",14)} Waiting for their answer. You can add more, or decide any time.`:`Not sure yet? Ask something only they'd know, that wouldn't be on Facebook or LinkedIn. A right answer helps, but it isn't proof. They won't see your name or photo, only that you haven't decided.`}</p>${t.length?"":`<button class="link inline" style="align-self:center" data-act="qClose">Cancel, I don't want to ask</button>`}`;
       else q+=`<button class="ask-btn" data-act="qOpen" data-k="${esc(k)}">${ic("chat",20)}<span class="ask-txt"><b>Ask them a specific question first to confirm their identity</b><small>Something you both remember, not something on social media</small></span></button>`;
       return q;})()}
     ${hasPhoto(u)?`<div class="btns"><button class="primary" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="accepted">Yes, I know them</button><button class="grey" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="ignored">Not now</button></div>`
@@ -1058,6 +1058,7 @@ function act(a,el){const u=me();
     S.picks=S.picks.filter(x=>x.id!==id);if(!S.gone.picks.includes(id))S.gone.picks.push(id);S.confirmDel="";}
   else if(a==="setPickCity"){const p=S.picks.find(x=>x.id===el.dataset.id),c=val("pc_"+el.dataset.id);if(p&&c)p.city=c;}
   else if(a==="termsBack"){S.tab=S.termsFrom||"people";S.err="";save();render();const y=S.termsY||0;requestAnimationFrame(()=>window.scrollTo(0,y));return;}
+  else if(a==="qClose"){S.qOpen=null;S.qErr=null;save();render();return;}
   else if(a==="toggleConv"){S.collapsed=S.collapsed||{};S.collapsed[el.dataset.pk]=!S.collapsed[el.dataset.pk];save();render();return;}
   else if(a==="clearCool"){S.coolClear=Date.now();}
   else if(a==="askClearConn"){S.confirmClearConn=true;save();render();return;}
@@ -1165,7 +1166,7 @@ function merge(d){
   return [nu,np];}
 
 document.addEventListener("click",e=>{const t=e.target.closest("[data-act],[data-tab]");if(!t)return;
-  if(t.dataset.tab){if(t.dataset.tab==="terms"&&S.tab!=="terms"){S.termsFrom=S.tab;S.termsY=window.scrollY;}S.tab=t.dataset.tab;S.err="";S.flash="";S.connPanel=null;S.pendingSend=null;save();render();const sec=t.dataset.sec&&document.getElementById(t.dataset.sec);if(sec)sec.scrollIntoView();else if(t.dataset.tab==="terms"||t.dataset.tab==="example")window.scrollTo(0,0);return;}
+  if(t.dataset.tab){S.qOpen=null;S.qErr=null;if(t.dataset.tab==="terms"&&S.tab!=="terms"){S.termsFrom=S.tab;S.termsY=window.scrollY;}S.tab=t.dataset.tab;S.err="";S.flash="";S.connPanel=null;S.pendingSend=null;save();render();const sec=t.dataset.sec&&document.getElementById(t.dataset.sec);if(sec)sec.scrollIntoView();else if(t.dataset.tab==="terms"||t.dataset.tab==="example")window.scrollTo(0,0);return;}
   act(t.dataset.act,t);});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id&&e.target.id.startsWith("m_")){const b=e.target.parentElement.querySelector("[data-act=send]");if(b)b.click();}});
 document.addEventListener("change",e=>{const t=e.target,u=me();
