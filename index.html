@@ -258,6 +258,13 @@ h2{margin:0;font-size:20px;font-weight:700}
  :root[data-theme="dark"] .gal-add{border:1.5px solid rgba(200,210,225,.35);background:linear-gradient(180deg,#1A2B3F,#101C2A)}
  :root[data-theme="dark"] .cam{background:#20262E;border-color:#0F1C2B}
  :root[data-theme="dark"] .badge{border-color:#0E2238}
+.ph-btn{width:calc(100% + 32px);border-radius:10px 10px 0 0;text-align:left;font:inherit;color:inherit;cursor:pointer}
+.ph-btn .who{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.chev{flex:none;display:inline-flex;color:#C3D3E3;transition:transform .2s}
+.pick.shut .chev{transform:rotate(-90deg)}
+.pick.shut .post-head{border-radius:10px 10px 0 0}
+.conv-peek{margin:0;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media (prefers-reduced-motion:reduce){.chev{transition:none}}
 .danger-btn{background:var(--warn);color:var(--surface);font-weight:600;padding:9px 14px;border-radius:6px}
 .foot{margin-top:24px;text-align:center;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px;padding-inline:8px}
 .foot p{margin:0;max-width:60ch;margin-inline:auto}
@@ -887,8 +894,10 @@ function connections(){const u=me();const cs=connectionsOf(u.id);S.seen=S.seen||
     <span>Use these messages to reintroduce yourselves and make sure it's really them. ${KITW} isn't meant for keeping in touch. When you're both ready, share whatever contact details you're comfortable with and carry on in your own way.</span></div></div>`;
   return flash+intro+cs.map(c=>{const o=S.users[c.other];const th=S.messages[c.pk]||[];const pend=S.pendingSend&&S.pendingSend.pk===c.pk?S.pendingSend:null;
     const panel=S.connPanel&&S.connPanel.pk===c.pk?S.connPanel.kind:"";const F=firstName(o)||"them";
-    return `<article class="card pick">
-    <div class="post-head">${av(o,44)}<div class="who"><b>${esc(o.name)}</b><span class="meta">${c.how==="mutual"?"You picked each other":"Reconnected"}${c.place?" · "+esc(c.place):""}</span></div>${!seenBefore.includes(c.pk)?`<span class="status s-new">New match</span>`:c.how==="mutual"?`<span class="status s-conn">Mutual</span>`:""}</div>
+    const shut=!!(S.collapsed||{})[c.pk],last=th[th.length-1]||preMsgs(u.id,o.id).slice(-1)[0];
+    return `<article class="card pick${shut?" shut":""}">
+    <button class="post-head ph-btn" data-act="toggleConv" data-pk="${esc(c.pk)}" aria-expanded="${!shut}" aria-label="${shut?"Open":"Collapse"} conversation with ${esc(o.name)}">${av(o,44)}<span class="who"><b>${esc(o.name)}</b><span class="meta">${c.how==="mutual"?"You picked each other":"Reconnected"}${c.place?" · "+esc(c.place):""}</span></span>${!seenBefore.includes(c.pk)?`<span class="status s-new">New match</span>`:c.how==="mutual"?`<span class="status s-conn">Mutual</span>`:""}<span class="chev">${ic("down",20)}</span></button>
+    ${shut?(last?`<p class="conv-peek">${last.from===u.id?"You: ":""}${esc(last.text)}</p>`:`<p class="conv-peek">Tap their name to open the conversation.</p>`)+"</article>":""}${shut?"":`
     ${thumbs(o)}
     <div class="divider"></div>
     ${(S.tipOff||{})[c.pk]?"":`<div class="notice tip">${ic("shield",18)}<span>This chat is just for reconnecting. Take your time, and when you're both comfortable, swap the contact details you choose and keep in touch outside ${KITW}. Never send money or gift cards.</span><button class="link" data-act="dismissTip" data-pk="${esc(c.pk)}">Got it</button></div>`}
@@ -906,7 +915,7 @@ function connections(){const u=me();const cs=connectionsOf(u.id);S.seen=S.seen||
     ${panel==="block"?`<div class="notice">${ic("lock",18)}<div class="col-tight"><b>Block ${esc(F)}?</b>
         <span>You'll disappear from each other's lists and matches, and they can never reach you through ${KITW} anymore. They aren't told. You can unblock later from your Profile.</span>
         <div class="btns"><button class="primary" data-act="closePanel">Cancel</button><button class="danger-btn" data-act="block" data-id="${esc(o.id)}">Block</button></div></div></div>`:""}
-    ${panel?"":`<div class="conn-actions"><button class="link" data-act="connPanel" data-kind="disconnect" data-pk="${esc(c.pk)}">Disconnect</button><button class="link" data-act="connPanel" data-kind="block" data-pk="${esc(c.pk)}">Block</button></div>`}</article>`;}).join("");}
+    ${panel?"":`<div class="conn-actions"><button class="link" data-act="connPanel" data-kind="disconnect" data-pk="${esc(c.pk)}">Disconnect</button><button class="link" data-act="connPanel" data-kind="block" data-pk="${esc(c.pk)}">Block</button></div>`}</article>`}`;}).join("");}
 
 function aboutTab(){return `<div class="card intro">${ic("info",22)}<div class="col-tight"><b>About ${KITW}</b>
     <span>${KITW} helps people who knew each other back then find each other again. Add the people you want to connect with and where you knew them. If they join and your details line up, they get your request, and you only connect if they say yes.</span></div></div>
@@ -1049,6 +1058,7 @@ function act(a,el){const u=me();
     S.picks=S.picks.filter(x=>x.id!==id);if(!S.gone.picks.includes(id))S.gone.picks.push(id);S.confirmDel="";}
   else if(a==="setPickCity"){const p=S.picks.find(x=>x.id===el.dataset.id),c=val("pc_"+el.dataset.id);if(p&&c)p.city=c;}
   else if(a==="termsBack"){S.tab=S.termsFrom||"people";S.err="";save();render();const y=S.termsY||0;requestAnimationFrame(()=>window.scrollTo(0,y));return;}
+  else if(a==="toggleConv"){S.collapsed=S.collapsed||{};S.collapsed[el.dataset.pk]=!S.collapsed[el.dataset.pk];save();render();return;}
   else if(a==="clearCool"){S.coolClear=Date.now();}
   else if(a==="askClearConn"){S.confirmClearConn=true;save();render();return;}
   else if(a==="cancelClearConn"){S.confirmClearConn=false;save();render();return;}
