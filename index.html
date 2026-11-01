@@ -30,8 +30,14 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:60
 h2{margin:0;font-size:20px;font-weight:700}
 .ct{font-size:18px}
 .ct-or{color:var(--brass)}
-.ask-btn{width:100%;background:var(--brand-soft);color:var(--brand);border:1.5px solid var(--brand);font-weight:600;padding:10px 14px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center}
+.ask-btn{line-height:1.35;width:100%;background:var(--brand-soft);color:var(--brand);border:1.5px solid var(--brand);font-weight:600;padding:10px 14px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;gap:8px;text-align:center}
 .ask-btn:hover{background:var(--hover)}
+.ask-btn svg{flex:none}
+.ask-txt{display:flex;flex-direction:column;gap:2px;text-align:left}
+.ask-txt b{font-size:15px;font-weight:700}
+.ask-txt small{font-size:13px;font-weight:500;opacity:.85}
+.ask-btn{justify-content:flex-start;padding:11px 14px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.ask-tip{margin:0;font-size:14px;font-weight:600;color:var(--ink);text-align:center}
 
 /* test strip */
 .strip{background:var(--strip);color:var(--strip-ink);font-size:13px}
@@ -186,6 +192,15 @@ h2{margin:0;font-size:20px;font-weight:700}
 .cmt.me .bubble b{text-align:right}
 .cmt-input.me{flex-direction:row-reverse}
 .pre-h{margin:0;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center}
+.mrow{display:flex;flex-direction:column;gap:8px;padding:8px 0}.mrow+.mrow{border-top:1px solid var(--line)}
+.mrow-main{display:flex;align-items:center;gap:10px}.mrow .who b{font-size:15px}
+.re-btn{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--req-line);font-weight:700;padding:8px 14px;border-radius:999px;font-size:14px;white-space:nowrap}
+.ub-btn{background:var(--sunk);color:var(--ink);font-weight:600;padding:8px 14px;border-radius:999px;font-size:14px;white-space:nowrap}
+.notice.danger .ub-btn{background:transparent;box-shadow:inset 0 0 0 2px var(--danger)}
+.sec-h{display:flex;justify-content:space-between;align-items:center}.sec-h .cnt{font-size:13px;color:var(--muted)}
+.mconf{margin:0}
+.notice.warn.mconf{background:var(--brass-soft);box-shadow:inset 0 0 0 1.5px var(--req-line)}
+.notice.warn.mconf>svg{color:var(--brass)}
 .danger-btn{background:var(--warn);color:var(--surface);font-weight:600;padding:9px 14px;border-radius:6px}
 .foot{margin-top:24px;text-align:center;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px;padding-inline:8px}
 .foot p{margin:0;max-width:60ch;margin-inline:auto}
@@ -312,7 +327,7 @@ const saveSync=()=>{try{localStorage.setItem(SYNC_KEY,JSON.stringify(SY))}catch(
 const onClaude=/claude\.ai|claudeusercontent|claude\.site/.test(location.hostname);
 let syncMsg=SY.bin?"Not synced yet":"Not set up", pushTimer=null, syncing=false;
 const isOurs=d=>!!d&&(d.app==="keep-in-touch"||d.app==="keep-in-my-life");
-const payload=()=>({app:"keep-in-touch",v:1,users:S.users,picks:S.picks,decisions:S.decisions,confirms:S.confirms,messages:S.messages,gone:S.gone,removedAt:S.removedAt||{},coolClear:S.coolClear||0,connClear:S.connClear||0,disconnected:S.disconnected||{},reports:S.reports||[]});
+const payload=()=>({app:"keep-in-touch",v:1,users:S.users,picks:S.picks,decisions:S.decisions,decAt:S.decAt||{},confirms:S.confirms,messages:S.messages,gone:S.gone,removedAt:S.removedAt||{},coolClear:S.coolClear||0,connClear:S.connClear||0,disconnected:S.disconnected||{},reports:S.reports||[]});
 async function binFetch(method,body){
   const url="https://api.jsonbin.io/v3/b/"+encodeURIComponent(SY.bin.trim())+(method==="GET"?"/latest":"");
   const go=hdr=>fetch(url,{method,headers:{"Content-Type":"application/json","X-Bin-Meta":"false",[hdr]:SY.key.trim()},body:body?JSON.stringify(body):undefined});
@@ -624,7 +639,7 @@ function termsPage(){const sec=(id,title,body)=>`<section class="terms" id="${id
     <li>Take your time. Chat or video call before sharing your phone number, address or workplace.</li>
     <li>Never send money, gift cards or financial details to anyone you meet through ${KITW}.</li>
     <li>If you meet in person, choose a public place and tell a friend or family member where you'll be.</li>
-    <li>If something feels off, trust that feeling. Use Block, and report the person.</li>
+    <li>If something feels off, trust that feeling and use Block. They won't be told.</li>
     <li>If you're in danger, call 911 or your local emergency number.</li></ul>`)}
   ${sec("t-privacy","Privacy",`<ul>
     <li>Your list of people is never shown to anyone. Your photo is shown to the person you send a request to, and to people you connect with. Extra photos are shown only to people you've reconnected with.</li>
@@ -736,11 +751,30 @@ function requests(){const u=me();const inb=inbox(u.id),conf=toConfirm(u.id);
     ${(()=>{const k=p.id+"|"+u.id,t=qThread(k),mine=t.filter(m=>m.from===u.id).length,waiting=t.length&&t[t.length-1].from===u.id;
       let q=qaView(k,u.id);
       if(S.qOpen===k||t.length)q+=qaInput(k,"qAsk",!t.length?"Ask something only they would know…":waiting?"Add something…":"Reply or ask something else…")+`<p class="fine">${waiting?`${ic("chat",14)} Waiting for their answer. You can add more, or decide any time.`:`Not sure yet? Ask something only they'd know, that wouldn't be on Facebook or LinkedIn. A right answer helps, but it isn't proof. They won't see your name or photo, only that you haven't decided.`}</p>`;
-      else q+=`<button class="ask-btn" data-act="qOpen" data-k="${esc(k)}">${ic("chat",18)}<span>Not sure? Ask them a question first</span></button>`;
+      else q+=`<button class="ask-btn" data-act="qOpen" data-k="${esc(k)}">${ic("chat",20)}<span class="ask-txt"><b>Ask them a specific question first to confirm their identity</b><small>Something you both remember, not something on social media</small></span></button>`;
       return q;})()}
     ${hasPhoto(u)?`<div class="btns"><button class="primary" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="accepted">Yes, I know them</button><button class="grey" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="ignored">Not now</button></div>`
       :`${photoNotice("Add a profile photo first, so they can check it's really you.","Add photo")}<div class="btns"><button class="grey" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="ignored">Not now</button></div>`}
     <div class="toggle"><p class="fine">Only you can see this. They're never told if you choose Not now or Block.</p><button class="link warn" data-act="block" data-id="${esc(o.id)}">Block</button></div></article>`;}).join("");
+  h+=decidedLists(u);
+  return h;}
+const shortDate=t=>t?new Date(t).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"";
+function decidedLists(u){let h="";
+  const nn=S.picks.filter(p=>p.owner!==u.id&&S.decisions[p.id+"|"+u.id]==="ignored"&&S.users[p.owner]&&!(u.blocked||[]).includes(p.owner)&&!connectedWith(u.id,p.owner));
+  const row=(o,sub,btn,confirm)=>`<div class="mrow"><div class="mrow-main">${av(o,44)}<div class="who"><b>${esc(o.name)}</b><span class="meta">${sub}</span></div>${confirm?"":btn}</div>${confirm||""}</div>`;
+  if(nn.length)h+=`<div class="card"><div class="sec-h"><h2 class="ct ct-or">You said "Not now"</h2><span class="cnt">${nn.length}</span></div>
+    <p class="fine">They were never told. Changed your mind? Bring their request back and decide again.</p>
+    ${nn.map(p=>{const o=S.users[p.owner],k=p.id+"|"+u.id,F=esc(firstName(o)||"them"),when=shortDate((S.decAt||{})[k]);
+      return row(o,`${ic("pin",13)}${where(p)}${when?" · "+when:""}`,`<button class="re-btn" data-act="askRe" data-k="${esc(k)}">Reconsider</button>`,
+        S.confirmRe===k?`<div class="notice warn mconf">${ic("shield",18)}<div class="col-tight"><b>Open the door to ${F} again?</b><span>Their request comes back to the top of Requests so you can decide again. ${F} isn't told.</span>
+          <div class="btns"><button class="re-btn" data-act="reconsider" data-k="${esc(k)}">Bring request back</button><button class="grey" data-act="cancelRe">Cancel</button></div></div></div>`:"");}).join("")}</div>`;
+  const bl=(u.blocked||[]).filter(id=>S.users[id]);
+  if(bl.length)h+=`<div class="card"><div class="sec-h"><h2 class="ct ct-or">Blocked</h2><span class="cnt">${bl.length}</span></div>
+    <p class="fine">They can't find you or reach you, and they aren't told.</p>
+    ${bl.map(id=>{const o=S.users[id],F=esc(firstName(o)||"them"),when=shortDate((u.blockedAt||{})[id]);
+      return row(o,`${ic("lock",13)}Blocked${when?" "+when:""}`,`<button class="ub-btn" data-act="askUnblock" data-id="${esc(id)}">Unblock</button>`,
+        S.confirmUb===id?`<div class="notice danger mconf">${ic("lock",18)}<div class="col-tight"><b>Unblock ${F}?</b><span>${F} will be able to find you and send you requests again. They won't be told you blocked or unblocked them.</span>
+          <div class="btns"><button class="primary" data-act="cancelUnblock">Keep blocked</button><button class="ub-btn" data-act="unblock" data-id="${esc(id)}">Unblock</button></div></div></div>`:"");}).join("")}</div>`;
   return h;}
 
 const CHECKS=[
@@ -815,15 +849,7 @@ function connections(){const u=me();const cs=connectionsOf(u.id);S.seen=S.seen||
     ${panel==="block"?`<div class="notice">${ic("lock",18)}<div class="col-tight"><b>Block ${esc(F)}?</b>
         <span>You'll disappear from each other's lists and matches, and they can never reach you through ${KITW} anymore. They aren't told. You can unblock later from your Profile.</span>
         <div class="btns"><button class="primary" data-act="closePanel">Cancel</button><button class="danger-btn" data-act="block" data-id="${esc(o.id)}">Block</button></div></div></div>`:""}
-    ${panel==="report"?`<div class="notice">${ic("shield",18)}<div class="col-tight"><b>Report ${esc(F)}</b>
-        <span>What's happening? ${esc(F)} won't know who reported them.</span>
-        <div class="reasons">${["Harassment or threats","Asking for money","Pretending to be someone else","Inappropriate messages or photos","I don't know this person","Something else"].map((r,i)=>`<label class="check" for="rr_${i}"><input type="radio" name="rep_reason" id="rr_${i}" value="${esc(r)}"><span>${r}</span></label>`).join("")}</div>
-        <label class="f" for="rep_details">Details (optional)<textarea id="rep_details" maxlength="500" placeholder="What happened?"></textarea></label>
-        <label class="check" for="rep_block"><input type="checkbox" id="rep_block" checked><span>Also block ${esc(F)}</span></label>
-        ${S.repErr?`<p class="err">${esc(S.repErr)}</p>`:""}
-        <p class="fine">If you're in danger, call 911.</p>
-        <div class="btns"><button class="primary" data-act="report" data-id="${esc(o.id)}" data-pk="${esc(c.pk)}">Send report</button><button class="grey" data-act="closePanel">Cancel</button></div></div></div>`:""}
-    ${panel?"":`<div class="conn-actions"><button class="link" data-act="connPanel" data-kind="disconnect" data-pk="${esc(c.pk)}">Disconnect</button><button class="link" data-act="connPanel" data-kind="block" data-pk="${esc(c.pk)}">Block</button><button class="link warn" data-act="connPanel" data-kind="report" data-pk="${esc(c.pk)}">Report</button></div>`}</article>`;}).join("");}
+    ${panel?"":`<div class="conn-actions"><button class="link" data-act="connPanel" data-kind="disconnect" data-pk="${esc(c.pk)}">Disconnect</button><button class="link" data-act="connPanel" data-kind="block" data-pk="${esc(c.pk)}">Block</button></div>`}</article>`;}).join("");}
 
 function aboutTab(){return `<div class="card intro">${ic("info",22)}<div class="col-tight"><b>About ${KITW}</b>
     <span>${KITW} helps people who knew each other back then find each other again. Add the people you miss and where you knew them. If they join and your details line up, they get your request, and you only connect if they say yes.</span></div></div>
@@ -889,7 +915,7 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
   <div class="card"><h2 class="ct ct-or">Privacy and safety</h2>
     <div class="toggle"><div><b>Signed up</b><p class="fine">${u.joined?"People who list you with a matching history can send you a request.":"No one can find you."}</p></div><button class="switch" role="switch" aria-checked="${!!u.joined}" aria-label="Signed up" data-act="${u.joined?"leave":"join"}"></button></div>
     <div class="toggle"><div><b>Pause being found</b><p class="fine">Keep your account but stop all new requests.</p></div><button class="switch" role="switch" aria-checked="${!!u.paused}" aria-label="Pause being found" data-act="pause"></button></div>
-    ${(u.blocked||[]).length?`<b>Blocked</b>`+u.blocked.map(id=>S.users[id]?`<div class="toggle"><span>${esc(S.users[id].name)}</span><button class="link" data-act="unblock" data-id="${esc(id)}">Unblock</button></div>`:"").join(""):""}</div>
+    ${(u.blocked||[]).length?`<p class="fine">${ic("lock",14)} You've blocked ${u.blocked.length} ${u.blocked.length===1?"person":"people"}. <button class="link inline" data-tab="requests">Manage on Requests</button></p>`:""}</div>
 
   <div class="card"><h2 class="ct ct-or">Delete my profile</h2>
     ${S.confirmDelMe===2?`<div class="notice danger">${ic("trash",18)}<div class="col-tight"><b>Last check: this deletes everything</b>
@@ -969,8 +995,8 @@ function act(a,el){const u=me();
   else if(a==="clearCool"){S.coolClear=Date.now();}
   else if(a==="askClearConn"){S.confirmClearConn=true;save();render();return;}
   else if(a==="cancelClearConn"){S.confirmClearConn=false;save();render();return;}
-  else if(a==="clearConn"){S.connClear=Date.now();S.coolClear=Date.now();for(const p of S.picks)if(!S.gone.picks.includes(p.id))S.gone.picks.push(p.id);S.picks=[];S.removedAt={};S.compose=false;S.draft={};S.editPick=null;S.decisions={};S.confirms={};S.messages={};S.disconnected={};S.seen={};S.splashed={};S.msgDraft={};S.tipOff={};S.pendingSend=null;S.connPanel=null;S.qOpen=null;S.qErr=null;S.confirmClearConn=false;S.flash="Lists and connections cleared. Profiles are kept.";S.tab="people";}
-  else if(a==="decide"){S.decisions[el.dataset.k]=el.dataset.v;if(el.dataset.v==="accepted"){const p=S.picks.find(x=>x.id===el.dataset.k.split("|")[0]);if(p)S.yesNote=p.owner;}}
+  else if(a==="clearConn"){S.connClear=Date.now();S.coolClear=Date.now();for(const p of S.picks)if(!S.gone.picks.includes(p.id))S.gone.picks.push(p.id);S.picks=[];S.removedAt={};S.compose=false;S.draft={};S.editPick=null;S.decisions={};S.decAt={};S.confirms={};S.messages={};S.disconnected={};S.seen={};S.splashed={};S.msgDraft={};S.tipOff={};S.pendingSend=null;S.connPanel=null;S.qOpen=null;S.qErr=null;S.confirmClearConn=false;S.flash="Lists and connections cleared. Profiles are kept.";S.tab="people";}
+  else if(a==="decide"){S.decisions[el.dataset.k]=el.dataset.v;(S.decAt=S.decAt||{})[el.dataset.k]=Date.now();if(el.dataset.v==="accepted"){const p=S.picks.find(x=>x.id===el.dataset.k.split("|")[0]);if(p)S.yesNote=p.owner;}}
   else if(a==="yesGo"||a==="yesClose"){S.yesNote=null;if(a==="yesGo"){S.tab="connections";window.scrollTo(0,0);}}
   else if(a==="splashGo"||a==="splashClose"){S.splashed=S.splashed||{};const l=S.splashed[u.id]=S.splashed[u.id]||[];if(!l.includes(el.dataset.pk))l.push(el.dataset.pk);if(a==="splashGo")S.tab="connections";}
   else if(a==="qOpen"){S.qOpen=el.dataset.k;S.qErr=null;save();render();const i=document.getElementById(qid(el.dataset.k));if(i)i.focus();return;}
@@ -981,8 +1007,13 @@ function act(a,el){const u=me();
       const ok=a==="qAsk"?true:t.length>0;
       if(ok)(S.messages[qKey(k)]=S.messages[qKey(k)]||[]).push({from:u.id,text,ts:Date.now()});S.qOpen=null;}}
   else if(a==="confirm"){S.confirms[el.dataset.k]=el.dataset.v;}
-  else if(a==="block"){S.connPanel=null;S.flash="Blocked. They won't be told.";if(!u.blocked.includes(el.dataset.id))u.blocked.push(el.dataset.id);}
-  else if(a==="unblock"){u.blocked=u.blocked.filter(x=>x!==el.dataset.id);}
+  else if(a==="block"){S.connPanel=null;S.flash="Blocked. They won't be told.";if(!u.blocked.includes(el.dataset.id))u.blocked.push(el.dataset.id);(u.blockedAt=u.blockedAt||{})[el.dataset.id]=Date.now();}
+  else if(a==="askUnblock"){S.confirmUb=el.dataset.id;S.confirmRe=null;save();render();return;}
+  else if(a==="cancelUnblock"){S.confirmUb=null;save();render();return;}
+  else if(a==="unblock"){u.blocked=u.blocked.filter(x=>x!==el.dataset.id);if(u.blockedAt)delete u.blockedAt[el.dataset.id];S.confirmUb=null;}
+  else if(a==="askRe"){S.confirmRe=el.dataset.k;S.confirmUb=null;save();render();return;}
+  else if(a==="cancelRe"){S.confirmRe=null;save();render();return;}
+  else if(a==="reconsider"){const k=el.dataset.k;delete S.decisions[k];(S.decAt=S.decAt||{})[k]=Date.now();S.confirmRe=null;window.scrollTo(0,0);}
   else if(a==="send"){const pk=el.dataset.pk,inp=document.getElementById("m_"+pk);const text=(inp&&inp.value||"").trim();S.msgDraft=S.msgDraft||{};
     if(text){const kinds=detect(text).map(c=>c[1]);
       if(kinds.length){S.pendingSend={pk,text,kinds};S.msgDraft[pk]=text;save();render();return;}
@@ -1037,7 +1068,7 @@ function importText(raw){let d;
 function merge(d){
   let nu=0,np=0;
   const rc=+d.connClear||0,lc=+S.connClear||0,skipConn=rc<lc;
-  if(rc>lc){S.decisions={};S.confirms={};S.messages={};S.disconnected={};S.seen={};S.splashed={};S.msgDraft={};S.tipOff={};S.pendingSend=null;S.connPanel=null;S.qOpen=null;S.qErr=null;S.connClear=rc;}
+  if(rc>lc){S.decisions={};S.decAt={};S.confirms={};S.messages={};S.disconnected={};S.seen={};S.splashed={};S.msgDraft={};S.tipOff={};S.pendingSend=null;S.connPanel=null;S.qOpen=null;S.qErr=null;S.connClear=rc;}
   const g=d.gone||{};
   S.removedAt=S.removedAt||{};for(const k in d.removedAt||{})if(!(k in S.removedAt))S.removedAt[k]=d.removedAt[k];
   S.coolClear=Math.max(S.coolClear||0,+d.coolClear||0);
@@ -1053,7 +1084,10 @@ function merge(d){
   const have=new Set(S.picks.map(p=>p.id));
   for(const p of d.picks||[])if(p&&p.id&&!have.has(p.id)&&!S.gone.picks.includes(p.id)&&S.users[p.owner]){S.picks.push(p);np++;}
   S.picks=S.picks.filter(p=>!S.gone.picks.includes(p.id)&&S.users[p.owner]);
-  if(!skipConn)for(const k in d.decisions||{})if(!(k in S.decisions))S.decisions[k]=d.decisions[k];
+  if(!skipConn){S.decAt=S.decAt||{};const rd=d.decisions||{},ra=d.decAt||{};
+    for(const k of new Set([...Object.keys(rd),...Object.keys(ra)])){const rt=+ra[k]||0,lt=+S.decAt[k]||0;
+      if(rt>lt){if(k in rd)S.decisions[k]=rd[k];else delete S.decisions[k];S.decAt[k]=rt;}
+      else if(rt===lt&&(k in rd)&&!(k in S.decisions))S.decisions[k]=rd[k];}}
   if(!skipConn)for(const k in d.confirms||{})if(!(k in S.confirms))S.confirms[k]=d.confirms[k];
   if(!skipConn)for(const pk in d.messages||{}){const cur=S.messages[pk]||[];const seen=new Set(cur.map(m=>m.from+"|"+m.ts+"|"+m.text));
     for(const m of d.messages[pk]||[])if(m&&!seen.has(m.from+"|"+m.ts+"|"+m.text))cur.push(m);
