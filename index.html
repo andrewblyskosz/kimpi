@@ -265,6 +265,9 @@ h2{margin:0;font-size:20px;font-weight:700}
 .pick.shut .post-head{border-radius:10px 10px 0 0}
 .conv-peek{margin:0;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (prefers-reduced-motion:reduce){.chev{transition:none}}
+.ask-btn.on{box-shadow:inset 0 0 0 2px var(--brand)}
+.act-btn.on{color:var(--ink);background:var(--hover)}
+.conn-actions .link.on{color:var(--ink);text-decoration:underline}
 .danger-btn{background:var(--warn);color:var(--surface);font-weight:600;padding:9px 14px;border-radius:6px}
 .foot{margin-top:24px;text-align:center;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px;padding-inline:8px}
 .foot p{margin:0;max-width:60ch;margin-inline:auto}
@@ -441,7 +444,7 @@ const yearsOverlap=(a1,a2,b1,b2)=>a1-YEAR_SLACK<=b2&&b1-YEAR_SLACK<=a2;
 const CITY_ALIAS={toronto:["etobicoke","scarborough","northyork","eastyork","york","gta"]};
 const cityKey=c=>{const n=norm(c).replace(/\b(city|of|the|on|ont|ontario|canada)\b/g," ").replace(/\s+/g,"");for(const [k,v] of Object.entries(CITY_ALIAS))if(n===k||v.includes(n))return k;return n;};
 function cityMatch(a,b){const x=cityKey(a),y=cityKey(b);if(!x||!y)return false;return x===y||(Math.min(x.length,y.length)>=5&&lev(x,y)<=1);}
-const MAX_WORDS=8;
+const MAX_WORDS=8, MAX_HIST=10;
 const placeWords=p=>[...new Set(norm(p).split(/\s+/).filter(t=>t&&isKey(t)))];
 const wordCount=p=>placeWords(p).length;
 const placeParts=p=>String(p||"").split(",").map(x=>x.trim()).filter(Boolean);
@@ -793,8 +796,8 @@ function people(){const u=me();const mine=S.picks.filter(p=>p.owner===u.id&&!pic
     ${st.txt==="Check a photo"?`<p class="post-text">Someone said yes. Open Requests to check their photo.</p>`:""}
     ${candidates(p).map(c=>{const k=p.id+"|"+c.id,t=qThread(k);if(!t.length||S.decisions[k]||blockedBetween(S.users[p.owner],c))return "";const theirTurn=t[t.length-1].from===c.id,F=esc(p.name.split(" ")[0]||"them");
       return `<p class="post-text">${ic("chat",14)} ${theirTurn?`Someone who may be ${F} hasn't decided yet and asked you something. Your answer goes only to them.`:`Your reply was sent. They'll decide whether to connect. You can add more if you think of something.`}</p>${qaView(k,p.owner)}${qaInput(k,"qReply",theirTurn?"Write your answer…":"Add something…")}<p class="fine">Don't share a phone number, email, address or anything about money here.</p>`;}).join("")}
-    ${S.editPick===p.id?editForm(p):S.confirmDel===p.id?`<div class="notice">${ic("lock",18)}<span>Removing locks this spot for 30 days, so lists can't be cycled.</span><div class="btns"><button class="primary" data-act="cancelDel">Keep</button><button class="grey" data-act="delPick" data-id="${esc(p.id)}">Remove</button></div></div>`
-      :`<div class="actions">${canEdit(p)?`<button class="act-btn" data-act="editPick" data-id="${esc(p.id)}">${ic("edit",18)}Edit</button>`:""}<button class="act-btn" data-act="askDel" data-id="${esc(p.id)}">${ic("trash",18)}Remove</button></div>`}</article>`;}).join("")
+    ${S.editPick===p.id?editForm(p):""}${S.confirmDel===p.id?`<div class="notice">${ic("lock",18)}<span>Removing locks this spot for 30 days, so lists can't be cycled.</span><div class="btns"><button class="primary" data-act="cancelDel">Keep</button><button class="grey" data-act="delPick" data-id="${esc(p.id)}">Remove</button></div></div>`:""}
+      <div class="actions">${canEdit(p)?`<button class="act-btn${S.editPick===p.id?" on":""}" aria-expanded="${S.editPick===p.id}" data-act="editPick" data-id="${esc(p.id)}">${ic("edit",18)}Edit</button>`:""}<button class="act-btn${S.confirmDel===p.id?" on":""}" aria-expanded="${S.confirmDel===p.id}" data-act="askDel" data-id="${esc(p.id)}">${ic("trash",18)}Remove</button></div></article>`;}).join("")
   :`<div class="card empty">${ic("search",32)}<b style="color:var(--ink)">No one on your list yet</b><span>Tap "Who do you want to connect with?" to add your first person.</span></div>`}`;}
 
 function requests(){const u=me();const inb=inbox(u.id),conf=toConfirm(u.id);
@@ -814,8 +817,9 @@ function requests(){const u=me();const inb=inbox(u.id),conf=toConfirm(u.id);
     <p class="fine">Saying yes shares your photo with them so they can confirm it's you. ${KITW} doesn't check anyone's identity, so only say yes if you want to hear from this person.</p>
     ${(()=>{const k=p.id+"|"+u.id,t=qThread(k),mine=t.filter(m=>m.from===u.id).length,waiting=t.length&&t[t.length-1].from===u.id;
       let q=qaView(k,u.id);
-      if(S.qOpen===k||t.length)q+=qaInput(k,"qAsk",!t.length?"Ask something only they would know…":waiting?"Add something…":"Reply or ask something else…")+`<p class="fine">${waiting?`${ic("chat",14)} Waiting for their answer. You can add more, or decide any time.`:`Not sure yet? Ask something only they'd know, that wouldn't be on Facebook or LinkedIn. A right answer helps, but it isn't proof. They won't see your name or photo, only that you haven't decided.`}</p>${t.length?"":`<button class="link inline" style="align-self:center" data-act="qClose">Cancel, I don't want to ask</button>`}`;
-      else q+=`<button class="ask-btn" data-act="qOpen" data-k="${esc(k)}">${ic("chat",20)}<span class="ask-txt"><b>Ask them a specific question first to confirm their identity</b><small>Something you both remember, not something on social media</small></span></button>`;
+      const askBtn=`<button class="ask-btn${S.qOpen===k?" on":""}" data-act="qOpen" data-k="${esc(k)}" aria-expanded="${S.qOpen===k}">${ic("chat",20)}<span class="ask-txt"><b>Ask them a specific question first to confirm their identity</b><small>${S.qOpen===k?"Tap again to close":"Something you both remember, not something on social media"}</small></span></button>`;
+      if(!t.length)q+=askBtn;
+      if(S.qOpen===k||t.length)q+=qaInput(k,"qAsk",!t.length?"Ask something only they would know…":waiting?"Add something…":"Reply or ask something else…")+`<p class="fine">${waiting?`${ic("chat",14)} Waiting for their answer. You can add more, or decide any time.`:`Not sure yet? Ask something only they'd know, that wouldn't be on Facebook or LinkedIn. A right answer helps, but it isn't proof. They won't see your name or photo, only that you haven't decided.`}</p>`;
       return q;})()}
     ${hasPhoto(u)?`<div class="btns"><button class="primary" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="accepted">Yes, I know them</button><button class="grey" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="ignored">Not now</button></div>`
       :`${photoNotice("Add a profile photo first, so they can check it's really you.","Add photo")}<div class="btns"><button class="grey" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="ignored">Not now</button></div>`}
@@ -915,7 +919,7 @@ function connections(){const u=me();const cs=connectionsOf(u.id);S.seen=S.seen||
     ${panel==="block"?`<div class="notice">${ic("lock",18)}<div class="col-tight"><b>Block ${esc(F)}?</b>
         <span>You'll disappear from each other's lists and matches, and they can never reach you through ${KITW} anymore. They aren't told. You can unblock later from your Profile.</span>
         <div class="btns"><button class="primary" data-act="closePanel">Cancel</button><button class="danger-btn" data-act="block" data-id="${esc(o.id)}">Block</button></div></div></div>`:""}
-    ${panel?"":`<div class="conn-actions"><button class="link" data-act="connPanel" data-kind="disconnect" data-pk="${esc(c.pk)}">Disconnect</button><button class="link" data-act="connPanel" data-kind="block" data-pk="${esc(c.pk)}">Block</button></div>`}</article>`}`;}).join("");}
+    <div class="conn-actions"><button class="link${panel==="disconnect"?" on":""}" aria-expanded="${panel==="disconnect"}" data-act="connPanel" data-kind="disconnect" data-pk="${esc(c.pk)}">Disconnect</button><button class="link${panel==="block"?" on":""}" aria-expanded="${panel==="block"}" data-act="connPanel" data-kind="block" data-pk="${esc(c.pk)}">Block</button></div></article>`}`;}).join("");}
 
 function aboutTab(){return `<div class="card intro">${ic("info",22)}<div class="col-tight"><b>About ${KITW}</b>
     <span>${KITW} helps people who knew each other back then find each other again. Add the people you want to connect with and where you knew them. If they join and your details line up, they get your request, and you only connect if they say yes.</span></div></div>
@@ -940,9 +944,9 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
       <h1 class="prof-name">${esc(u.name||"New person")}</h1>
       ${past.length?`<p class="fine">Also known as ${esc(past.join(", "))}</p>`:""}
       <div class="btns center"><label class="primary" for="me_photo">${ic("camera",16)}${hasPhoto(u)?"Change photo":"Add photo"}</label>${u.photo?`<button class="grey" data-act="clearPhoto">Remove photo</button>`:""}</div>
-      ${hasPhoto(u)&&!S.photoTip?`<button class="link inline" data-act="photoTip" style="align-self:center">Tips for a good photo</button>`:""}
+      ${hasPhoto(u)?`<button class="link inline" data-act="photoTip" aria-expanded="${!!S.photoTip}" style="align-self:center">${S.photoTip?"Hide tips":"Tips for a good photo"}</button>`:""}
       ${hasPhoto(u)&&!S.photoTip?"":`<div class="notice face-tip">${ic("camera",18)}<div class="col-tight"><b>Show your face so they know it's you</b>
-        <span>Use a clear photo of just you, with your face easy to see. It can be from today or from back then, whichever they'd recognize. It's the only way someone from your past can tell it's really you. A cartoon, pet, logo, sunset, group shot or sunglasses means nobody will recognize you, and they'll probably say no.</span>${hasPhoto(u)?`<button class="link" data-act="photoTip">Hide tips</button>`:""}</div></div>`}
+        <span>Use a clear photo of just you, with your face easy to see. It can be from today or from back then, whichever they'd recognize. It's the only way someone from your past can tell it's really you. A cartoon, pet, logo, sunset, group shot or sunglasses means nobody will recognize you, and they'll probably say no.</span></div></div>`}
       <p class="fine">${hasPhoto(u)?"Your photo is shown to the person you send a request to, and to people you connect with.":"A photo of your face is required before you can send or accept requests."}</p>
     </div></section>
 
@@ -965,7 +969,7 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
     <p class="fine">${ic("lock",14)} Your birth date and gender are private. They're only used to confirm you're 18 or older and are never shown to anyone.</p>
     <div class="hist-actions"><span class="saved-note" id="me_saved"${S.savedMe?"":" hidden"}>${ic("check",16)}Saved</span><span class="fine" id="me_dirty" hidden>Unsaved changes</span><button class="save-btn" data-act="saveMe" id="me_save" disabled>Save</button></div></div>
 
-  <div class="card"><h2 class="ct ct-or">Where people knew you</h2>
+  <div class="card"><div class="sec-h"><h2 class="ct ct-or">Where people knew you</h2><span class="cnt">${(u.history||[]).length} of ${MAX_HIST} places used</span></div>
     <div class="hist">${(u.history||[]).map((h,i)=>`<div class="hist-row"><p class="hist-num">Place ${i+1}</p>
       <label class="f" for="h_place_${i}">Place and details<input id="h_place_${i}" data-h="${i}" data-f="place" value="${esc(h.place)}" placeholder="e.g. Humber College, film program"><span class="${kwClass(h.place)}" id="kw_h_${i}" aria-live="polite">${kwLeft(h.place)}</span></label>
       <label class="f hc" for="h_city_${i}">City or town<input id="h_city_${i}" data-h="${i}" data-f="city" value="${esc(h.city)}" placeholder="e.g. Toronto"></label>
@@ -975,7 +979,7 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
       ${histReady(h)?(hasYears(h)?"":`<p class="fine hist-miss">${ic("pin",14)} Tip: adding years, even roughly, helps the right person find you.</p>`):`<p class="err hist-miss">${ic("pin",14)} Add ${[!String(h.place||"").trim()&&"a place",!String(h.city||"").trim()&&"a city"].filter(Boolean).join(" and ")}. Nobody can find you here until it's filled in.</p>`}
       ${S.confirmHist===i?`<div class="hist-actions"><span class="fine">Delete Place ${i+1}?</span><button class="grey" data-act="cancelDelHist">Cancel</button><button class="del-btn" data-act="delHist" data-i="${i}">Yes, delete</button></div>`
         :`<div class="hist-actions">${S.savedHist===i?`<span class="saved-note">${ic("check",16)}Saved</span>`:""}<button class="save-btn" data-act="saveHist" data-i="${i}">Save</button><button class="del-btn" data-act="askDelHist" data-i="${i}">Delete</button></div>`}</div>`).join("")}</div>
-    <button class="grey" data-act="addHist" style="align-self:flex-start">Add a place</button>
+    ${(u.history||[]).length<MAX_HIST?`<button class="grey" data-act="addHist" style="align-self:flex-start">Add a place</button>`:`<p class="fine">${ic("lock",14)} You've used all ${MAX_HIST} places. Delete one to add another.</p>`}
     <p class="fine"><button class="link inline" data-tab="example">See an example</button> · Add other names too, like a nickname, campus or department. Someone can reach you only if one word matches and the city matches too (plus the years, when you've both added them).</p></div>
 
   <div class="card"><h2 class="ct ct-or">Privacy and safety</h2>
@@ -1040,8 +1044,8 @@ function act(a,el){const u=me();
     else if(slotsUsed(u.id)>=MAX_PICKS)S.err=locked.length?`Your list is full. Removed spots start unlocking ${unlockDate(locked)}.`:"Your list is full. Remove someone to add another.";
     else if(namesOf(u).some(n=>fullSim(n,name)))S.err="That looks like your own name.";
     else{S.picks.push({id:"p"+Date.now().toString(36),owner:u.id,name,place,city,from:noYears?"":f,to:noYears?"":t});S.err="";S.compose=false;S.draft={};}}
-  else if(a==="askDel"){S.confirmDel=el.dataset.id;S.editPick=null;}
-  else if(a==="editPick"){S.editPick=el.dataset.id;S.editDraft=null;S.editErr="";S.confirmDel="";}
+  else if(a==="askDel"){S.confirmDel=S.confirmDel===el.dataset.id?"":el.dataset.id;S.editPick=null;}
+  else if(a==="editPick"){if(S.editPick===el.dataset.id){S.editPick=null;S.editDraft=null;S.editErr="";save();render();return;}S.editPick=el.dataset.id;S.editDraft=null;S.editErr="";S.confirmDel="";}
   else if(a==="cancelEditPick"){S.editPick=null;S.editDraft=null;S.editErr="";}
   else if(a==="saveEditPick"){const p=S.picks.find(x=>x.id===el.dataset.id);if(!p||!canEdit(p)){S.editPick=null;}else{
     const place=val("ep_place"),city=val("ep_city");let f=parseInt(val("ep_from")),t=parseInt(val("ep_to"));
@@ -1067,7 +1071,7 @@ function act(a,el){const u=me();
   else if(a==="decide"){S.decisions[el.dataset.k]=el.dataset.v;(S.decAt=S.decAt||{})[el.dataset.k]=Date.now();if(el.dataset.v==="accepted"){const p=S.picks.find(x=>x.id===el.dataset.k.split("|")[0]);if(p)S.yesNote=p.owner;}}
   else if(a==="yesGo"||a==="yesClose"){S.yesNote=null;if(a==="yesGo"){S.tab="connections";window.scrollTo(0,0);}}
   else if(a==="splashGo"||a==="splashClose"){S.splashed=S.splashed||{};const l=S.splashed[u.id]=S.splashed[u.id]||[];if(!l.includes(el.dataset.pk))l.push(el.dataset.pk);if(a==="splashGo")S.tab="connections";}
-  else if(a==="qOpen"){S.qOpen=el.dataset.k;S.qErr=null;save();render();const i=document.getElementById(qid(el.dataset.k));if(i)i.focus();return;}
+  else if(a==="qOpen"){if(S.qOpen===el.dataset.k){S.qOpen=null;S.qErr=null;save();render();return;}S.qOpen=el.dataset.k;S.qErr=null;save();render();const i=document.getElementById(qid(el.dataset.k));if(i)i.focus();return;}
   else if(a==="qAsk"||a==="qReply"){const k=el.dataset.k,inp=document.getElementById(qid(k)),text=(inp&&inp.value||"").trim();S.qErr=null;
     if(text){const kinds=detect(text).map(c=>c[1]);
       if(kinds.length){S.qErr={k,msg:"Please take out "+listWords(kinds)+". That can be shared once you're connected."};save();render();const i=document.getElementById(qid(k));if(i){i.value=text;i.focus();}return;}
@@ -1089,7 +1093,7 @@ function act(a,el){const u=me();
   else if(a==="confirmSend"){const p=S.pendingSend;if(p){(S.messages[p.pk]=S.messages[p.pk]||[]).push({from:u.id,text:p.text,ts:Date.now()});S.msgDraft=S.msgDraft||{};S.msgDraft[p.pk]="";}S.pendingSend=null;}
   else if(a==="cancelSend"){S.pendingSend=null;save();render();const i=document.getElementById("m_"+el.dataset.pk);if(i){i.focus();}return;}
   else if(a==="dismissTip"){S.tipOff=S.tipOff||{};S.tipOff[el.dataset.pk]=1;save();render();return;}
-  else if(a==="connPanel"){S.connPanel={pk:el.dataset.pk,kind:el.dataset.kind};S.repErr="";S.flash="";save();render();return;}
+  else if(a==="connPanel"){const same=S.connPanel&&S.connPanel.pk===el.dataset.pk&&S.connPanel.kind===el.dataset.kind;S.connPanel=same?null:{pk:el.dataset.pk,kind:el.dataset.kind};S.repErr="";S.flash="";save();render();return;}
   else if(a==="closePanel"){S.connPanel=null;S.repErr="";save();render();return;}
   else if(a==="disconnect"){S.disconnected=S.disconnected||{};S.disconnected[el.dataset.pk]={by:u.id,at:Date.now()};S.connPanel=null;S.flash="Disconnected. They won't be notified.";}
   else if(a==="report"){const r=document.querySelector('input[name="rep_reason"]:checked');
@@ -1097,7 +1101,7 @@ function act(a,el){const u=me();
     S.reports=S.reports||[];S.reports.push({id:"r"+Date.now().toString(36),by:u.id,about:el.dataset.id,reason:r.value,details:val("rep_details"),at:Date.now()});
     const bl=document.getElementById("rep_block");if(bl&&bl.checked&&!u.blocked.includes(el.dataset.id))u.blocked.push(el.dataset.id);
     S.connPanel=null;S.repErr="";S.flash=bl&&bl.checked?"Thanks. Your report was saved and they've been blocked.":"Thanks. Your report was saved for review.";}
-  else if(a==="addHist"){u.history.push({place:"",city:"",from:"",to:""});}
+  else if(a==="addHist"){if((u.history||[]).length<MAX_HIST)u.history.push({place:"",city:"",from:"",to:""});}
   else if(a==="askDelHist"){S.confirmHist=+el.dataset.i;S.savedHist=null;save();render();return;}
   else if(a==="cancelDelHist"){S.confirmHist=null;save();render();return;}
   else if(a==="delHist"){u.history.splice(+el.dataset.i,1);S.confirmHist=null;S.savedHist=null;}
