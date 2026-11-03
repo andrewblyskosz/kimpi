@@ -436,7 +436,12 @@ function parts(full){const t=norm(full).split(/\s+/).filter(x=>x&&x!=="nee");ret
 const nickGroups=n=>NICK.filter(g=>g.includes(n)).map(g=>g[0]);
 const firstSim=(a,b)=>!!a&&!!b&&(canon(a)===canon(b)||nickGroups(a).some(x=>nickGroups(b).includes(x))||(Math.min(a.length,b.length)>=4&&lev(a,b)<=1));
 const lastSim=(a,b)=>!!a&&!!b&&lev(a,b)<=(Math.max(a.length,b.length)>=6?2:1);
-function namesOf(u){const cur=parts(u.name);const out=[u.name];(u.past||[]).forEach(p=>{const pp=parts(p);if(pp.last)out.push(p);else{out.push(cur.first+" "+p);if(cur.last)out.push(p+" "+cur.last);}});return out;}
+function namesOf(u){const cur=parts(u.name);const out=[u.name];const past=(u.past||[]).filter(Boolean);
+  past.forEach(p=>{if(parts(p).last)out.push(p);});
+  const words=[...new Set(past.flatMap(p=>norm(p).split(/\s+/)).filter(w=>w&&w!=="nee"))];
+  const firsts=[cur.first,...words].filter(Boolean),lasts=[cur.last,...words].filter(Boolean);
+  for(const f of firsts)for(const l of lasts)if(f!==l)out.push(f+" "+l);
+  return [...new Set(out)];}
 function nameMatch(name,u){const a=parts(name);return namesOf(u).some(n=>{const b=parts(n);return firstSim(a.first,b.first)&&(a.last?lastSim(a.last,b.last):true);});}
 const fullSim=(x,y)=>{const a=parts(x),b=parts(y);return firstSim(a.first,b.first)&&lastSim(a.last,b.last);};
 const GENERIC=new Set(["the","of","and","high","school","secondary","collegiate","college","university","public","elementary","ci","ss","hs","academy","institute","inc","ltd","co","company","club","church","street","st","grade","class","team","program","programme","department","dept","campus","office","building","centre","center","store","plant","floor","year","years"]);
