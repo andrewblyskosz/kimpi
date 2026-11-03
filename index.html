@@ -272,6 +272,7 @@ h2{margin:0;font-size:20px;font-weight:700}
 .info-btn.on{color:var(--brand)}
 .info-box{margin:0;font-size:13px;color:var(--muted);background:var(--sunk);border-radius:8px;padding:8px 10px}
 .quiet{margin:0;font-size:13px;color:var(--muted)}
+.ex-top{align-self:flex-start;font-size:14px;font-weight:600}
 .danger-btn{background:var(--warn);color:var(--surface);font-weight:600;padding:9px 14px;border-radius:6px}
 .foot{margin-top:24px;text-align:center;font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:6px;padding-inline:8px}
 .foot p{margin:0;max-width:60ch;margin-inline:auto}
@@ -777,10 +778,11 @@ function people(){const u=me();const mine=S.picks.filter(p=>p.owner===u.id&&!pic
     ${!(u.history||[]).some(histReady)?`<div class="notice">${ic("pin",18)}<span>Add at least one place and its city on your Profile, so people from your past can find you.</span><button class="grey" data-tab="me">Add a place</button></div>`:""}
     ${!hasPhoto(u)?photoNotice("Add a profile photo so the person you're looking for can see it's really you. Your list isn't sent until you do.","Add photo"):""}
     ${open?`<div class="compose-form">
+      <button class="link inline ex-top" data-tab="example">See an example</button>
       <label class="f" for="np_name">First and last name you knew them by<input id="np_name" value="${esc(d.name)}" placeholder="e.g. Sarah Bennett" autocomplete="off"></label>
       <div class="grid2"><label class="f" for="np_place">Where you knew them<input id="np_place" value="${esc(d.place)}" placeholder="e.g. Humber College, film program"><span class="${kwClass(d.place)}" id="kw_np" aria-live="polite">${kwLeft(d.place)}</span></label>
         <label class="f" for="np_city">City or town<input id="np_city" value="${esc(d.city)}" placeholder="e.g. Toronto"></label></div>
-      ${info("addtip","Tips")}${infoBox("addtip",`Add other names too, like a nickname, campus or department. <button class="link inline" data-tab="example">See an example</button>`)}
+      ${info("addtip","Tips")}${infoBox("addtip",`Add other names too, like a nickname, campus or department.`)}
       <div class="grid2"><label class="f" for="np_from">From (optional)<input id="np_from" class="yr" type="text" inputmode="numeric" maxlength="4" autocomplete="off" value="${esc(d.from)}" placeholder="Year"></label>
         <label class="f" for="np_to">To (${MAX_SPAN} years max)<input id="np_to" class="yr" type="text" inputmode="numeric" maxlength="4" autocomplete="off" value="${esc(d.to)}" placeholder="Year"></label></div>
       <select id="np_era" aria-label="Pick roughly when">${eraOptions()}</select>
@@ -879,8 +881,8 @@ function yesNote(o){const F=firstName(o)||"them";
   return `<div class="splash" role="dialog" aria-modal="true" aria-label="You know ${esc(F)}"><div class="splash-card">
     <div class="splash-pair">${av(me(),72)}<span class="splash-link">${ic("check",22)}</span>${av(o,72)}</div>
     <p class="splash-kick">You said "Yes, I know them"</p>
-    <h2 class="splash-title">Almost there</h2>
-    <p class="post-text">Now ${esc(F)} checks your photo to confirm it's you. Then you're reconnected.</p>
+    <h2 class="splash-title">Now ${esc(F)} will see your photo.</h2>
+    <p class="post-text">If ${esc(F)} accepts your request, you will be connected.</p>
     <div class="btns center"><button class="primary" data-act="yesGo">Go to Reconnected</button><button class="grey" data-act="yesClose">OK</button></div>
   </div></div>`;}
 function splash(c){const o=S.users[c.other];const F=firstName(o)||"them";
@@ -973,6 +975,7 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
     <div class="hist-actions"><span class="saved-note" id="me_saved"${S.savedMe?"":" hidden"}>${ic("check",16)}Saved</span><span class="fine" id="me_dirty" hidden>Unsaved changes</span><button class="save-btn" data-act="saveMe" id="me_save" disabled>Save</button></div></div>
 
   <div class="card"><div class="sec-h"><h2 class="ct ct-or">Where people knew you</h2><span class="cnt">${(u.history||[]).length} of ${MAX_HIST} places used</span></div>
+    <button class="link inline ex-top" data-tab="example">See an example</button>
     <div class="hist">${(u.history||[]).map((h,i)=>`<div class="hist-row"><p class="hist-num">Place ${i+1}</p>
       <label class="f" for="h_place_${i}">Place and details<input id="h_place_${i}" data-h="${i}" data-f="place" value="${esc(h.place)}" placeholder="e.g. Humber College, film program"><span class="${kwClass(h.place)}" id="kw_h_${i}" aria-live="polite">${kwLeft(h.place)}</span></label>
       <label class="f hc" for="h_city_${i}">City or town<input id="h_city_${i}" data-h="${i}" data-f="city" value="${esc(h.city)}" placeholder="e.g. Toronto"></label>
@@ -983,7 +986,7 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
       ${S.confirmHist===i?`<div class="hist-actions"><span class="fine">Delete Place ${i+1}?</span><button class="grey" data-act="cancelDelHist">Cancel</button><button class="del-btn" data-act="delHist" data-i="${i}">Yes, delete</button></div>`
         :`<div class="hist-actions">${S.savedHist===i?`<span class="saved-note">${ic("check",16)}Saved</span>`:""}<button class="save-btn" data-act="saveHist" data-i="${i}">Save</button><button class="del-btn" data-act="askDelHist" data-i="${i}">Delete</button></div>`}</div>`).join("")}</div>
     ${(u.history||[]).length<MAX_HIST?`<button class="grey" data-act="addHist" style="align-self:flex-start">Add a place</button>`:`<p class="fine">${ic("lock",14)} You've used all ${MAX_HIST} places. Delete one to add another.</p>`}
-    <p class="quiet"><button class="link inline" data-tab="example">See an example</button> · ${info("places","How places match")}</p>${infoBox("places","Add nicknames, a campus or a department too. One word plus the city has to match, and the years if you both add them.")}</div>
+    <p class="quiet">${info("places","How places match")}</p>${infoBox("places","Add nicknames, a campus or a department too. One word plus the city has to match, and the years if you both add them.")}</div>
 
   <div class="card"><h2 class="ct ct-or">Privacy and safety</h2>
     <div class="toggle"><div><b>Signed up</b><p class="fine">${u.joined?"People from your past can find you.":"No one can find you."}</p></div><button class="switch" role="switch" aria-checked="${!!u.joined}" aria-label="Signed up" data-act="${u.joined?"leave":"join"}"></button></div>
