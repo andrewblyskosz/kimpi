@@ -428,14 +428,15 @@ const spanOk=p=>!hasYears(p)||histSpan(p)[1]-histSpan(p)[0]<=MAX_SPAN;
 const pickReady=(p,o)=>!!p.city&&spanOk(p)&&hasPhoto(o);
 
 /* ---------- fuzzy matching ---------- */
-const NICK=[["john","jon","jonathan","johnny","jack"],["robert","rob","bob","bobby","robbie"],["elizabeth","liz","beth","lizzie","betty","eliza"],["michael","mike","mikey","mick"],["katherine","catherine","kathryn","kate","katie","kathy","cathy","kat"],["andrew","andy","drew"],["james","jim","jimmy","jamie"],["william","will","bill","billy","liam"],["stephen","steven","steve"],["christopher","chris"],["susan","sue","suzy","susie"],["thomas","tom","tommy"],["david","dave","davey"],["nicholas","nick","nicky"],["matthew","matt"],["alexander","alexandra","alex","sandy"],["samuel","samantha","sam","sammy"],["jennifer","jen","jenny"],["margaret","maggie","meg","peggy"],["richard","rick","rich"],["joseph","joe","joey"],["daniel","dan","danny"],["anthony","tony"],["patricia","pat","patty","trish"],["deborah","debbie","deb"],["devesh","dev"]];
+const NICK=[["john","jon","jonathan","johnny","jack"],["robert","rob","bob","bobby","robbie"],["elizabeth","liz","beth","lizzie","betty","eliza"],["michael","mike","mikey","mick"],["katherine","catherine","kathryn","kate","katie","kathy","cathy","kat"],["andrew","andy","drew"],["james","jim","jimmy","jamie"],["william","will","bill","billy","liam"],["stephen","steven","steve"],["christopher","chris"],["susan","sue","suzy","susie"],["thomas","tom","tommy"],["david","dave","davey"],["nicholas","nick","nicky"],["matthew","matt"],["alexander","alexandra","alex","sandy"],["samuel","samantha","sam","sammy"],["jennifer","jen","jenny"],["margaret","maggie","meg","peggy"],["richard","rick","rich"],["joseph","joe","joey"],["daniel","dan","danny"],["anthony","tony"],["patricia","pat","patty","trish"],["deborah","debbie","deb"],["devesh","dev"],["nicole","nic","nik","nikki","niki","nicki","nicky","nikky"],["nicholas","nik","nic"]];
 const canon=n=>{for(const g of NICK)if(g.includes(n))return g[0];return n;};
 const norm=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^a-z\s'-]/g," ").replace(/['-]/g,"");
 function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=[...Array(n+1).keys()];for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return p[n];}
 function parts(full){const t=norm(full).split(/\s+/).filter(x=>x&&x!=="nee");return{first:t[0]||"",last:t.length>1?t[t.length-1]:""};}
-const firstSim=(a,b)=>!!a&&!!b&&(canon(a)===canon(b)||(Math.min(a.length,b.length)>=4&&lev(a,b)<=1));
+const nickGroups=n=>NICK.filter(g=>g.includes(n)).map(g=>g[0]);
+const firstSim=(a,b)=>!!a&&!!b&&(canon(a)===canon(b)||nickGroups(a).some(x=>nickGroups(b).includes(x))||(Math.min(a.length,b.length)>=4&&lev(a,b)<=1));
 const lastSim=(a,b)=>!!a&&!!b&&lev(a,b)<=(Math.max(a.length,b.length)>=6?2:1);
-function namesOf(u){const cur=parts(u.name);const out=[u.name];(u.past||[]).forEach(p=>{const pp=parts(p);out.push(pp.last?p:(cur.first+" "+p));});return out;}
+function namesOf(u){const cur=parts(u.name);const out=[u.name];(u.past||[]).forEach(p=>{const pp=parts(p);if(pp.last)out.push(p);else{out.push(cur.first+" "+p);if(cur.last)out.push(p+" "+cur.last);}});return out;}
 function nameMatch(name,u){const a=parts(name);return namesOf(u).some(n=>{const b=parts(n);return firstSim(a.first,b.first)&&(a.last?lastSim(a.last,b.last):true);});}
 const fullSim=(x,y)=>{const a=parts(x),b=parts(y);return firstSim(a.first,b.first)&&lastSim(a.last,b.last);};
 const GENERIC=new Set(["the","of","and","high","school","secondary","collegiate","college","university","public","elementary","ci","ss","hs","academy","institute","inc","ltd","co","company","club","church","street","st","grade","class","team","program","programme","department","dept","campus","office","building","centre","center","store","plant","floor","year","years"]);
@@ -763,7 +764,7 @@ const photoNotice=(text,btn)=>`<div class="notice">${ic("camera",18)}<span>${tex
 const canEdit=p=>!Object.keys(S.decisions||{}).some(k=>k.startsWith(p.id+"|"))&&!Object.keys(S.messages||{}).some(k=>k.startsWith("q:"+p.id+"|"));
 function editForm(p){const d=S.editDraft||p;
   return `<div class="compose-form">
-    <p class="fine">${ic("lock",14)} The name stays as "${esc(p.name)}". To change the name, remove this person instead.</p>
+    <label class="f" for="ep_name">First and last name you knew them by<input id="ep_name" value="${esc(d.name)}" placeholder="e.g. Sarah Bennett" autocomplete="off"></label>
     <div class="grid2"><label class="f" for="ep_place">Where you knew them<input id="ep_place" value="${esc(d.place)}" placeholder="e.g. Humber College, film program"><span class="${kwClass(d.place)}" id="kw_ep" aria-live="polite">${kwLeft(d.place)}</span></label>
       <label class="f" for="ep_city">City or town<input id="ep_city" value="${esc(d.city)}" placeholder="e.g. Toronto"></label></div>
     <div class="grid2"><label class="f" for="ep_from">From (optional)<input id="ep_from" class="yr" type="text" inputmode="numeric" maxlength="4" autocomplete="off" value="${esc(d.from)}" placeholder="Year"></label>
@@ -790,7 +791,7 @@ function people(){const u=me();const mine=S.picks.filter(p=>p.owner===u.id&&!pic
       ${S.err?`<p class="err">${esc(S.err)}</p>`:""}
       <div class="btns"><button class="primary" data-act="addPick" ${used>=MAX_PICKS?"disabled":""}>Add to my list</button><button class="grey" data-act="compose">Cancel</button></div></div>`:""}
     <div class="divider"></div>
-    <div class="compose-foot"><span>${used} of ${MAX_PICKS} spots used${locked.length?`, ${locked.length} locked until ${unlockDate(locked)}`:""} · ${info("match","How matching works")}</span></div>${infoBox("match","No one can search by name. The place and city have to match, and the years too if you both add them. Your list is private.")}
+    <div class="compose-foot"><span>${used} of ${MAX_PICKS} spots used${locked.length?`, ${locked.length} locked until ${unlockDate(locked)}`:""} · ${info("match","How matching works")}</span></div>${infoBox("match","No one can search by name alone. Their name, the place and the city all have to match, and the years too if you both add them. Your list is private.")}
   </div>
   ${mine.length?mine.slice().reverse().map(p=>{const st=pickStatus(p);return `<article class="card pick">
     <div class="post-head">${ghost()}<div class="who"><b>${esc(p.name)}</b><span class="meta">${ic("pin",14)}${where(p)} · ${esc(years(p))}</span></div><span class="status ${st.cls}">${esc(st.txt)}</span></div>
@@ -930,7 +931,7 @@ function aboutTab(){return `<div class="card intro">${ic("info",22)}<div class="
     <span>${KITW} helps people who knew each other back then find each other again. Add the people you want to connect with and where you knew them. If they join and your details line up, they get your request, and you only connect if they say yes.</span></div></div>
   <div class="card"><h2 class="ct ct-wm">How ${KITW} protects you</h2><ul class="guards">
     ${["No search. You can't look anyone up by name.",
-       "The place and city have to match, and the years too when you've both added them.",
+       "Their name, the place and the city have to match, and the years too when you've both added them.",
        `Year ranges are limited to ${MAX_SPAN} years, so no one can cast a wide net.`,
        "Only the person you're looking for sees your request. Nobody else ever sees your list.",
        "The person you're looking for decides. If you both list each other, you're connected right away.",
@@ -986,7 +987,7 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
       ${S.confirmHist===i?`<div class="hist-actions"><span class="fine">Delete Place ${i+1}?</span><button class="grey" data-act="cancelDelHist">Cancel</button><button class="del-btn" data-act="delHist" data-i="${i}">Yes, delete</button></div>`
         :`<div class="hist-actions">${S.savedHist===i?`<span class="saved-note">${ic("check",16)}Saved</span>`:""}<button class="save-btn" data-act="saveHist" data-i="${i}">Save</button><button class="del-btn" data-act="askDelHist" data-i="${i}">Delete</button></div>`}</div>`).join("")}</div>
     ${(u.history||[]).length<MAX_HIST?`<button class="grey" data-act="addHist" style="align-self:flex-start">Add a place</button>`:`<p class="fine">${ic("lock",14)} You've used all ${MAX_HIST} places. Delete one to add another.</p>`}
-    <p class="quiet">${info("places","How places match")}</p>${infoBox("places","Add nicknames, a campus or a department too. One word plus the city has to match, and the years if you both add them.")}</div>
+    <p class="quiet">${info("places","How places match")}</p>${infoBox("places","Add nicknames, a campus or a department too. Your name, one word of the place and the city have to match, and the years if you both add them.")}</div>
 
   <div class="card"><h2 class="ct ct-or">Privacy and safety</h2>
     <div class="toggle"><div><b>Signed up</b><p class="fine">${u.joined?"People from your past can find you.":"No one can find you."}</p></div><button class="switch" role="switch" aria-checked="${!!u.joined}" aria-label="Signed up" data-act="${u.joined?"leave":"join"}"></button></div>
@@ -1054,15 +1055,18 @@ function act(a,el){const u=me();
   else if(a==="editPick"){if(S.editPick===el.dataset.id){S.editPick=null;S.editDraft=null;S.editErr="";save();render();return;}S.editPick=el.dataset.id;S.editDraft=null;S.editErr="";S.confirmDel="";}
   else if(a==="cancelEditPick"){S.editPick=null;S.editDraft=null;S.editErr="";}
   else if(a==="saveEditPick"){const p=S.picks.find(x=>x.id===el.dataset.id);if(!p||!canEdit(p)){S.editPick=null;}else{
-    const place=val("ep_place"),city=val("ep_city");let f=parseInt(val("ep_from")),t=parseInt(val("ep_to"));
-    S.editDraft={place,city,from:val("ep_from"),to:val("ep_to")};
+    const name=val("ep_name"),place=val("ep_place"),city=val("ep_city");let f=parseInt(val("ep_from")),t=parseInt(val("ep_to"));
+    S.editDraft={name,place,city,from:val("ep_from"),to:val("ep_to")};
     if(!Number.isFinite(f))f=NaN;if(!Number.isFinite(t))t=NaN;if(isNaN(t)&&!isNaN(f))t=f;if(isNaN(f)&&!isNaN(t))f=t;if(f>t)[f,t]=[t,f];const noYears=isNaN(f);
-    if(!place)S.editErr="Add where you knew them.";
+    if(!parts(name).first)S.editErr="Add the name you knew them by.";
+    else if(!parts(name).last)S.editErr="Add their last name too, the one you knew them by (like a maiden name).";
+    else if(namesOf(me()).some(n=>fullSim(n,name)))S.editErr="That looks like your own name.";
+    else if(!place)S.editErr="Add where you knew them.";
     else if(wordCount(place)>MAX_WORDS)S.editErr=`Use up to ${MAX_WORDS} key words for the place.`;
     else if(!city)S.editErr="Add the city or town.";
     else if(!noYears&&(f<1930||t>new Date().getFullYear()))S.editErr="Those years don't look right. Use four-digit years like 1985, or leave them blank.";
     else if(!noYears&&t-f>MAX_SPAN)S.editErr=`Keep it to ${MAX_SPAN} years or less.`;
-    else{p.place=place;p.city=city;p.from=noYears?"":f;p.to=noYears?"":t;p.editedAt=Date.now();S.editPick=null;S.editDraft=null;S.editErr="";}}}
+    else{p.name=name.replace(/\s+/g," ").trim();p.place=place;p.city=city;p.from=noYears?"":f;p.to=noYears?"":t;p.editedAt=Date.now();S.editPick=null;S.editDraft=null;S.editErr="";}}}
   else if(a==="cancelDel"){S.confirmDel="";}
   else if(a==="delPick"){const id=el.dataset.id,p=S.picks.find(x=>x.id===id);if(p){S.removedAt=S.removedAt||{};S.removedAt[id]={owner:p.owner,at:Date.now()};}
     S.picks=S.picks.filter(x=>x.id!==id);if(!S.gone.picks.includes(id))S.gone.picks.push(id);S.confirmDel="";}
