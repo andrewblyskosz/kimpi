@@ -271,6 +271,9 @@ h2{margin:0;font-size:20px;font-weight:700}
 .info-btn{background:transparent;color:var(--muted);padding:2px 0;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px;vertical-align:middle;align-self:flex-start}
 .info-btn.on{color:var(--brand)}
 .info-box{margin:0;font-size:13px;color:var(--muted);background:var(--sunk);border-radius:8px;padding:8px 10px}
+.upd-bar{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:0;padding:10px 16px;background:var(--gold,#C9A96E);color:#1B1407;font-size:14px;font-weight:700;cursor:pointer}
+.upd-bar svg{flex:none}
+.ver{margin:10px 0 0;text-align:center}
 .quiet{margin:0;font-size:13px;color:var(--muted)}
 .ex-top{align-self:flex-start;font-size:14px;font-weight:600}
 .danger-btn{background:var(--warn);color:var(--surface);font-weight:600;padding:9px 14px;border-radius:6px}
@@ -419,6 +422,11 @@ async function syncNow(write){if(!SY.bin||!SY.key||(!write&&syncing))return;sync
 const pull=()=>syncNow(false), push=()=>syncNow(true);
 const schedulePush=()=>{if(!SY.bin||!SY.key)return;clearTimeout(pushTimer);pushTimer=setTimeout(push,1200);};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull();});
+const APP_VERSION="1.00";let NEW_VER="";
+async function checkVersion(){if(APP_VERSION==="dev"||!/^https?:$/.test(location.protocol))return;
+  try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const v=String((await r.json()).version||"");
+    if(v&&parseFloat(v)>parseFloat(APP_VERSION)&&NEW_VER!==v){NEW_VER=v;render(true);}}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")checkVersion();});
 const MAX_PICKS=10, MAX_SPAN=6, COOL=30*864e5;
 const hasPhoto=u=>!!(u&&safePhoto(u.photo));
 const lockedSlots=uid=>Object.values(S.removedAt||{}).filter(r=>r&&r.owner===uid&&r.at>(S.coolClear||0)&&Date.now()-r.at<COOL);
@@ -616,7 +624,7 @@ function render(bg){
   const qCount=(u.joined&&u.agreed)?qPending(u.id).length:0;
   S.splashed=S.splashed||{};const splashC=(u.joined&&u.agreed)?connectionsOf(u.id).find(c=>!(S.splashed[u.id]||[]).includes(c.pk)):null;
   const newCount=(u.joined&&u.agreed)?connectionsOf(u.id).filter(c=>!((S.seen||{})[u.id]||[]).includes(c.pk)).length:0;
-  document.getElementById("app").innerHTML=`${strip(u)}
+  document.getElementById("app").innerHTML=`${strip(u)}${NEW_VER?`<button class="upd-bar" data-act="appUpdate">${ic("check",16)}<span>Version ${esc(NEW_VER)} is ready. Tap to update.</span></button>`:""}
   <header class="bar"><div class="bar-in">
     <div class="bar-top">${LOGO()}<span class="bar-sub" style="letter-spacing:.14em;font-size:10px;white-space:nowrap;line-height:1.3">A SECOND HELLO</span>
       <button class="bar-me" data-tab="me" aria-label="Your profile">${av(u,38)}</button></div>
@@ -946,7 +954,8 @@ function aboutTab(){return `<div class="card intro">${ic("info",22)}<div class="
        `Up to ${MAX_PICKS} people per list, and removed names lock their spot for 30 days.`,
        "Blocking and a pause switch are always on hand."].map(t=>`<li>${ic("shield",18)}<span>${t}</span></li>`).join("")}</ul></div>
   <div class="card"><h2 class="ct">The fine print</h2>
-    <div class="conn-actions"><button class="link inline" data-tab="terms">Terms of use</button><button class="link inline" data-tab="terms" data-sec="t-safety">Safety tips</button><button class="link inline" data-tab="terms" data-sec="t-privacy">Privacy</button></div></div>`;}
+    <div class="conn-actions"><button class="link inline" data-tab="terms">Terms of use</button><button class="link inline" data-tab="terms" data-sec="t-safety">Safety tips</button><button class="link inline" data-tab="terms" data-sec="t-privacy">Privacy</button></div>
+    <p class="fine ver">${APP_VERSION==="dev"?"Preview copy":"Version "+APP_VERSION}</p></div>`;}
 function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
   return `${S.flash?`<div class="notice">${ic("check",18)}<span>${esc(S.flash)}</span></div>`:""}<section class="card profile"><div class="cover"><svg class="net" viewBox="0 0 680 150" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><defs><linearGradient id="spokeMetal" gradientUnits="userSpaceOnUse" x1="160" y1="0" x2="520" y2="150"><stop offset="0" stop-color="#3A454E"/><stop offset=".35" stop-color="#626E74"/><stop offset=".6" stop-color="#464F57"/><stop offset="1" stop-color="#5F6A6D"/></linearGradient></defs><g stroke="url(#spokeMetal)" stroke-width="3" stroke-linecap="butt"><line x1="270.6" y1="135.2" x2="182.3" y2="116.5"/><line x1="289.8" y1="99.8" x2="245.1" y2="55.1"/><line x1="340.0" y1="79.0" x2="340.0" y2="46.8"/><line x1="390.2" y1="99.8" x2="434.9" y2="55.1"/><line x1="409.4" y1="135.2" x2="497.7" y2="116.5"/></g><g fill="none" stroke="url(#spokeMetal)" stroke-width="3.5"><circle cx="171.8" cy="114.2" r="9"/><circle cx="237.5" cy="47.5" r="9"/><circle cx="340.0" cy="36.0" r="9"/><circle cx="442.5" cy="47.5" r="9"/><circle cx="508.2" cy="114.2" r="9"/></g></svg></div>
     <div class="prof-main">
@@ -1085,6 +1094,7 @@ function act(a,el){const u=me();
   else if(a==="cancelClearConn"){S.confirmClearConn=false;save();render();return;}
   else if(a==="clearConn"){S.connClear=Date.now();S.coolClear=Date.now();for(const p of S.picks)if(!S.gone.picks.includes(p.id))S.gone.picks.push(p.id);S.picks=[];S.removedAt={};S.compose=false;S.draft={};S.editPick=null;S.decisions={};S.decAt={};S.confirms={};S.messages={};S.disconnected={};S.seen={};S.splashed={};S.msgDraft={};S.tipOff={};S.pendingSend=null;S.connPanel=null;S.qOpen=null;S.qErr=null;S.confirmClearConn=false;S.flash="Lists and connections cleared. Profiles are kept.";S.tab="people";}
   else if(a==="decide"){S.decisions[el.dataset.k]=el.dataset.v;(S.decAt=S.decAt||{})[el.dataset.k]=Date.now();if(el.dataset.v==="accepted"){const p=S.picks.find(x=>x.id===el.dataset.k.split("|")[0]);if(p)S.yesNote=p.owner;}}
+  else if(a==="appUpdate"){location.replace(location.pathname+"?v="+encodeURIComponent(NEW_VER));return;}
   else if(a==="yesGo"||a==="yesClose"){S.yesNote=null;if(a==="yesGo"){S.tab="connections";window.scrollTo(0,0);}}
   else if(a==="splashGo"||a==="splashClose"){S.splashed=S.splashed||{};const l=S.splashed[u.id]=S.splashed[u.id]||[];if(!l.includes(el.dataset.pk))l.push(el.dataset.pk);if(a==="splashGo")S.tab="connections";}
   else if(a==="qOpen"){if(S.qOpen===el.dataset.k){S.qOpen=null;S.qErr=null;save();render();return;}S.qOpen=el.dataset.k;S.qErr=null;save();render();const i=document.getElementById(qid(el.dataset.k));if(i)i.focus();return;}
@@ -1254,7 +1264,7 @@ document.addEventListener("input",e=>{const t=e.target;let el=null;
   else if(t.dataset&&t.dataset.f==="place"&&t.dataset.h!=null)el=document.getElementById("kw_h_"+t.dataset.h);
   if(el){el.textContent=kwLeft(t.value);el.className=kwClass(t.value);}});
 
-render();
+render();checkVersion();
 pull();
 </script>
 </body></html>
