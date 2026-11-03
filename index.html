@@ -331,6 +331,22 @@ h2{margin:0;font-size:20px;font-weight:700}
 input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--brand)}
 @media (prefers-reduced-motion:reduce){.switch::after{transition:none}}
 @media (max-width:360px){.grid2{grid-template-columns:1fr}}
+:root .card.pk2.pk2{--bg:#111418;--surface:#1C2127;--sunk:#252B33;--hover:#2D343D;--ink:#E7ECF1;--muted:#A2ADBA;--line:#313943;--brand:#41A2D7;--brand-ink:#08131C;--brand-soft:#16344D;--cover:#2A7BAE;--brass:#D4B27A;--brass-soft:#2E2617;--note:#173322;--note-line:#2F6B43;--field:#2A323B;--field-line:#3E4955;--alert:#F0625F;--warn:#E58A6F;--req-line:#C9A96E;--req-glow:rgba(201,169,110,.28);--yes:#C9A96E;--yes-ink:#1A140A;--gold:linear-gradient(135deg,#F1E2BC 0%,#C9A96E 45%,#E8D3A2 70%,#B08A52 100%);--head:#D9A86C;--burst-line:#56554F;--burst-star:#5E615B;--burst-edge:#42423D;--glow:rgba(65,162,215,.55);--strip:#0A0D0C;color-scheme:dark;--logo-or:#F3A43A;color:var(--ink);border:2.5px solid #D4B27A;border-radius:14px;padding:0;gap:0;overflow:hidden;background:linear-gradient(180deg,#10223A,#0B1828);box-shadow:0 0 16px rgba(212,178,122,.30),0 2px 10px rgba(0,0,0,.18)}
+.pk2-head{display:flex;gap:14px;align-items:flex-start;padding:16px 16px 14px}
+.pk2-av{flex:none;width:52px;height:52px;border-radius:50%;background:#2E4A6B;display:flex;align-items:center;justify-content:center;color:#D4B27A;margin-top:2px}
+.pk2-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.pk2-who b{font-size:21px;font-weight:800;line-height:1.15;color:#FFFFFF;overflow-wrap:anywhere}
+.pk2-meta{font-size:15px;color:#C3D3E3}
+.pk2-meta .yrs{white-space:nowrap}
+.pk2 .pk2-head .status{margin-top:4px;align-self:flex-start;font-size:14px;padding:5px 12px}
+.pk2-body{display:flex;flex-direction:column;gap:10px;padding:0 16px 14px}
+.pk2-note{display:flex;gap:8px;align-items:center;border-top:1px solid rgba(195,211,227,.18);padding:12px 16px;margin:0;font-size:14px;color:#A9BBCD}
+.pk2-note svg{flex:none}
+.pk2-acts{display:flex;border-top:1px solid rgba(195,211,227,.18);padding:4px 6px}
+.pk2-acts button{background:transparent;color:#C3D3E3;font-weight:700;font-size:16px;padding:10px;display:inline-flex;gap:8px;align-items:center;border-radius:8px}
+.pk2-acts button:hover,.pk2-acts button.on{color:#FFFFFF;background:rgba(255,255,255,.07)}
+.pk2-acts .pk2-rm{margin-left:auto}
+.list-head{margin:6px 2px -2px;font-size:18px;color:var(--head)}
 </style>
 
 <div class="app" id="app"></div>
@@ -390,7 +406,7 @@ async function syncNow(write){if(!SY.bin||!SY.key||(!write&&syncing))return;sync
 const pull=()=>syncNow(false), push=()=>syncNow(true);
 const schedulePush=()=>{if(!SY.bin||!SY.key)return;clearTimeout(pushTimer);pushTimer=setTimeout(push,1200);};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull();});
-const APP_VERSION="1.01";let NEW_VER="";
+const APP_VERSION="1.03";let NEW_VER="";
 async function checkVersion(){if(APP_VERSION==="dev"||!/^https?:$/.test(location.protocol))return;
   try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const v=String((await r.json()).version||"");
     if(v&&parseFloat(v)>parseFloat(APP_VERSION)&&NEW_VER!==v){NEW_VER=v;render(true);}}catch(e){}}
@@ -772,17 +788,17 @@ function people(){const u=me();const mine=S.picks.filter(p=>p.owner===u.id&&!pic
     <div class="divider"></div>
     <div class="compose-foot"><span>${used} of ${MAX_PICKS} spots used${locked.length?`, ${locked.length} locked until ${unlockDate(locked)}`:""} · ${info("match","How matching works")}</span></div>${infoBox("match","No one can search by name alone. Their name, the place and the city all have to match, and the years too if you both add them. Your list is private.")}
   </div>
-  ${mine.length?mine.slice().reverse().map(p=>{const st=pickStatus(p);return `<article class="card pick">
-    <div class="post-head">${ghost()}<div class="who"><b>${esc(p.name)}</b><span class="meta">${ic("pin",14)}${where(p)} · ${esc(years(p))}</span></div><span class="status ${st.cls}">${esc(st.txt)}</span></div>
-    ${st.txt==="Add a city"?`<div class="inline-fix"><input id="pc_${esc(p.id)}" placeholder="City or town" aria-label="City or town for ${esc(p.name)}"><button class="primary" data-act="setPickCity" data-id="${esc(p.id)}">Save</button></div><p class="fine">A city is now needed so matches are more certain.</p>`:""}
+  ${mine.length?`<h2 class="list-head">Connection requests</h2>`+mine.slice().reverse().map(p=>{const st=pickStatus(p);const body=`${st.txt==="Add a city"?`<div class="inline-fix"><input id="pc_${esc(p.id)}" placeholder="City or town" aria-label="City or town for ${esc(p.name)}"><button class="primary" data-act="setPickCity" data-id="${esc(p.id)}">Save</button></div><p class="fine">A city is now needed so matches are more certain.</p>`:""}
     ${st.txt==="Years too wide"?`<p class="post-text">Year ranges are now limited to ${MAX_SPAN}. Tap Edit to shorten the range.</p>`:""}
     ${st.txt==="Add your photo to send"?`<p class="post-text">This won't be sent until you add a profile photo.</p>`:""}
-    ${st.cls==="s-wait"?`<p class="quiet">${ic("lock",14)} Private. ${esc(p.name.split(" ")[0]||"They")} gets your request if they join and your details match.</p>`:""}
     ${st.txt==="Check a photo"?`<p class="post-text">Someone said yes. Open Requests to check their photo.</p>`:""}
     ${candidates(p).map(c=>{const k=p.id+"|"+c.id,t=qThread(k);if(!t.length||S.decisions[k]||blockedBetween(S.users[p.owner],c))return "";const theirTurn=t[t.length-1].from===c.id,F=esc(p.name.split(" ")[0]||"them");
       return `<p class="post-text">${ic("chat",14)} ${theirTurn?`Someone who may be ${F} asked you something.`:`Reply sent. Add more any time.`}</p>${qaView(k,p.owner)}${qaInput(k,"qReply",theirTurn?"Write your answer…":"Add something…")}<p class="quiet">${ic("lock",14)} No contact info or money talk yet.</p>`;}).join("")}
-    ${S.editPick===p.id?editForm(p):""}${S.confirmDel===p.id?`<div class="notice">${ic("lock",18)}<span>This spot stays locked for 30 days.</span><div class="btns"><button class="primary" data-act="cancelDel">Keep</button><button class="grey" data-act="delPick" data-id="${esc(p.id)}">Remove</button></div></div>`:""}
-      <div class="actions">${canEdit(p)?`<button class="act-btn${S.editPick===p.id?" on":""}" aria-expanded="${S.editPick===p.id}" data-act="editPick" data-id="${esc(p.id)}">${ic("edit",18)}Edit</button>`:""}<button class="act-btn${S.confirmDel===p.id?" on":""}" aria-expanded="${S.confirmDel===p.id}" data-act="askDel" data-id="${esc(p.id)}">${ic("trash",18)}Remove</button></div></article>`;}).join("")
+    ${S.editPick===p.id?editForm(p):""}${S.confirmDel===p.id?`<div class="notice">${ic("lock",18)}<span>This spot stays locked for 30 days.</span><div class="btns"><button class="primary" data-act="cancelDel">Keep</button><button class="grey" data-act="delPick" data-id="${esc(p.id)}">Remove</button></div></div>`:""}`.trim();return `<article class="card pk2">
+    <div class="pk2-head"><span class="pk2-av">${ic("user",26)}</span><div class="pk2-who"><b>${esc(p.name)}</b><span class="pk2-meta">${where(p)} · <span class="yrs">${esc(years(p))}</span></span></div><span class="status ${st.cls}">${esc(st.txt)}</span></div>
+    ${body?`<div class="pk2-body">${body}</div>`:""}
+    ${st.cls==="s-wait"?`<p class="pk2-note">${ic("lock",15)}<span>Private until ${esc(p.name.split(" ")[0]||"they")} joins and your details match.</span></p>`:""}
+    <div class="pk2-acts">${canEdit(p)?`<button class="${S.editPick===p.id?"on":""}" aria-expanded="${S.editPick===p.id}" data-act="editPick" data-id="${esc(p.id)}">${ic("edit",18)}Edit</button>`:""}<button class="pk2-rm${S.confirmDel===p.id?" on":""}" aria-expanded="${S.confirmDel===p.id}" data-act="askDel" data-id="${esc(p.id)}">${ic("trash",18)}Remove</button></div></article>`;}).join("")
   :`<div class="card empty">${ic("search",32)}<b style="color:var(--ink)">No one on your list yet</b><span>Tap "Who do you want to connect with?" to add your first person.</span></div>`}`;}
 
 function requests(){const u=me();const inb=inbox(u.id),conf=toConfirm(u.id);
