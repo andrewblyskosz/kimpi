@@ -398,7 +398,12 @@ if(!S||!S.users)S=seed();
 S.gone=S.gone||{users:[],picks:[]};
 S.viewing=null;S.zoom=null;S.inviteMsg=null;
 S.tab="me";
-const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+/* every profile carries editedAt: any local change stamps it, and sync keeps whichever copy was edited last */
+const userSig=u=>{const {editedAt,...rest}=u||{};return JSON.stringify(rest);};
+const SIG={};const markSeen=id=>{if(S.users[id])SIG[id]=userSig(S.users[id]);};
+Object.keys(S.users).forEach(markSeen);
+function stampUsers(){const now=Date.now();for(const [id,u] of Object.entries(S.users)){const sg=userSig(u);if(SIG[id]!==sg){if(SIG[id]!==undefined||!u.editedAt)u.editedAt=now;SIG[id]=sg;}}}
+const save=()=>{stampUsers();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 
 /* ---------- JSONBin sync ---------- */
 const SYNC_KEY="kiml.sync.v1";
@@ -428,7 +433,7 @@ async function syncNow(write){if(!SY.bin||!SY.key||(!write&&syncing))return;sync
 const pull=()=>syncNow(false), push=()=>syncNow(true);
 const schedulePush=()=>{if(!SY.bin||!SY.key)return;clearTimeout(pushTimer);pushTimer=setTimeout(push,1200);};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull();});
-const APP_VERSION="1.08";let NEW_VER="";
+const APP_VERSION="1.10";let NEW_VER="";
 async function checkVersion(){if(APP_VERSION==="dev"||!/^https?:$/.test(location.protocol))return;
   try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const v=String((await r.json()).version||"");
     if(v&&parseFloat(v)>parseFloat(APP_VERSION)&&NEW_VER!==v){NEW_VER=v;render(true);}}catch(e){}}
@@ -944,7 +949,7 @@ function connections(){const u=me();const cs=connectionsOf(u.id);S.seen=S.seen||
     ${(()=>{const pre=preMsgs(u.id,o.id);if(!pre.length)return "";return `<p class="pre-h">Before you connected</p><div class="comments pre">${pre.map(m=>{const a=S.users[m.from]||{name:"Someone",hue:0};const mine=m.from===u.id;
       return `<div class="cmt${mine?" me":""}">${av(a,32)}<div class="bubble-wrap"><div class="bubble ${mine?"q-mine":"q-them"}"><b>${esc(a.name)}</b><span>${esc(m.text)}</span></div></div></div>`;}).join("")}</div>${th.length?`<p class="pre-h">Since you connected</p>`:""}`;})()}
     ${th.length?`<div class="comments">${th.map(m=>{const a=S.users[m.from]||{name:"Someone",hue:0};const mine=m.from===u.id;const money=!mine&&CHECKS[3][2].test(m.text);
-      return `<div class="cmt${mine?" me":""}">${av(a,32)}<div class="bubble-wrap"><div class="bubble ${mine?"q-mine":"q-them"}"><b>${esc(a.name)}</b><span>${esc(m.text)}</span></div>${money?`<p class="warn-line">${ic("shield",14)}This message mentions money. ${KITW} will never ask you for money, and neither should anyone you reconnect with.</p>`:""}</div></div>`;}).join("")}</div>`:`<p class="fine">Say hello. It's been a while.</p>`}
+      return `<div class="cmt${mine?" me":""}">${av(a,32)}<div class="bubble-wrap"><div class="bubble ${mine?"q-mine":"q-them"}"><b>${esc(a.name)}</b><span>${esc(m.text)}</span></div>${money?`<p class="warn-line">${ic("shield",14)}This message mentions money. ${KITW} will never ask you for money, and neither should anyone you reconnect with.</p>`:""}</div></div>`;}).join("")}</div>`:""}
     ${pend?`<div class="notice warn">${ic("shield",18)}<div class="col-tight"><b>Before you send</b>
         <span>This message includes ${esc(listWords(pend.kinds))}. ${pend.kinds.includes("money")?"Never send money or gift cards. ":"Only share this if you're sure it's them. "}Once it's sent, it can't be taken back.</span>
         <div class="btns"><button class="primary" data-act="cancelSend" data-pk="${esc(c.pk)}">Edit message</button><button class="grey" data-act="confirmSend" data-pk="${esc(c.pk)}">Send anyway</button></div></div></div>`
@@ -1188,11 +1193,13 @@ function merge(d){
   S.coolClear=Math.max(S.coolClear||0,+d.coolClear||0);
   S.disconnected=S.disconnected||{};if(!skipConn)for(const k in d.disconnected||{})if(!(k in S.disconnected))S.disconnected[k]=d.disconnected[k];
   for(const p of d.picks||[]){const l=p&&S.picks.find(x=>x.id===p.id);if(l&&!l.city&&p.city)l.city=p.city;
-    if(l&&(+p.editedAt||0)>(+l.editedAt||0)){l.place=p.place;l.city=p.city;l.from=p.from;l.to=p.to;l.editedAt=p.editedAt;}}
+    if(l&&(+p.editedAt||0)>(+l.editedAt||0)){if(p.name)l.name=p.name;l.place=p.place;l.city=p.city;l.from=p.from;l.to=p.to;l.editedAt=p.editedAt;}}
   for(const id of g.users||[])if(!S.gone.users.includes(id))S.gone.users.push(id);
   for(const id of g.picks||[])if(!S.gone.picks.includes(id))S.gone.picks.push(id);
   for(const [id,u] of Object.entries(d.users||{})){if(!u||typeof u!=="object"||S.gone.users.includes(id))continue;
-    if(!S.users[id]){nu++;S.users[id]=u;}else if(id!==S.current||S.fresh){S.users[id]=u;}}
+    const l=S.users[id],re=+u.editedAt||0,le=+(l&&l.editedAt)||0;
+    if(!l){nu++;S.users[id]=u;markSeen(id);}
+    else if(re>le||(re===le&&(id!==S.current||S.fresh))){S.users[id]=u;markSeen(id);}}
   for(const id of S.gone.users)if(id!==S.current)delete S.users[id];
   const have=new Set(S.picks.map(p=>p.id));
   for(const p of d.picks||[])if(p&&p.id&&!have.has(p.id)&&!S.gone.picks.includes(p.id)&&S.users[p.owner]){S.picks.push(p);np++;}
