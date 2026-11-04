@@ -19,9 +19,6 @@ label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:60
 h2{margin:0;font-size:20px;font-weight:700}
 .ct{font-size:18px}
 .ct-or{color:var(--brass)}
-.ask-btn{line-height:1.35;width:100%;background:var(--brand-soft);color:var(--brand);border:1.5px solid var(--brand);font-weight:600;border-radius:6px;display:inline-flex;align-items:center;gap:8px;text-align:center;justify-content:flex-start;padding:11px 14px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
-.ask-btn:hover{background:var(--hover)}
-.ask-btn svg{flex:none}
 .ask-txt{display:flex;flex-direction:column;gap:2px;text-align:left}
 .ask-txt b{font-size:15px;font-weight:700}
 .ask-txt small{font-size:13px;font-weight:500;opacity:.85}
@@ -101,7 +98,7 @@ h2{margin:0;font-size:20px;font-weight:700}
 .bubble b{font-size:13px}
 .cmt-input{display:flex;gap:8px;align-items:center}
 .pill-input{flex:1;display:flex;align-items:center;background:var(--sunk);border-radius:999px;padding:2px 4px 2px 14px;min-width:0}
-.pill-input input{border:0;background:transparent;padding:8px 0;flex:1}
+.pill-input input{border:0!important;background:transparent!important;padding:8px 0;flex:1;border-radius:0}
 .pill-input input:focus-visible{outline:none}
 .pill-input:focus-within{outline:2px solid var(--brand);outline-offset:1px}
 .icon-btn{background:transparent;color:var(--brand);width:38px;height:38px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none}
@@ -208,7 +205,6 @@ h2{margin:0;font-size:20px;font-weight:700}
  :root:not([data-theme="light"]) .pill-input.q-in{box-shadow:inset 0 0 0 1.5px var(--req-line)}
  :root:not([data-theme="light"]) .btns .grey{background:linear-gradient(180deg,#2E3742,#1A2029);color:#E6ECF2;border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
  :root:not([data-theme="light"]) .prof-main .btns .grey{background:transparent;border:0;box-shadow:none;color:#C9D3DE}
- :root:not([data-theme="light"]) .ask-btn{background:linear-gradient(180deg,#16314F,#0F2238);border-color:rgba(65,162,215,.6)}
  :root:not([data-theme="light"]) .splash-card{background:linear-gradient(180deg,#15283D,#0E1B2A);border-top:3px solid var(--yes);box-shadow:0 0 40px rgba(65,162,215,.25),0 20px 50px rgba(0,0,0,.6)}
  :root:not([data-theme="light"]) .gal-add{border:1.5px solid rgba(200,210,225,.35);background:linear-gradient(180deg,#1A2B3F,#101C2A)}
  :root:not([data-theme="light"]) .cam{background:#20262E;border-color:#0F1C2B}
@@ -223,7 +219,6 @@ h2{margin:0;font-size:20px;font-weight:700}
  :root[data-theme="dark"] .pill-input.q-in{box-shadow:inset 0 0 0 1.5px var(--req-line)}
  :root[data-theme="dark"] .btns .grey{background:linear-gradient(180deg,#2E3742,#1A2029);color:#E6ECF2;border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
  :root[data-theme="dark"] .prof-main .btns .grey{background:transparent;border:0;box-shadow:none;color:#C9D3DE}
- :root[data-theme="dark"] .ask-btn{background:linear-gradient(180deg,#16314F,#0F2238);border-color:rgba(65,162,215,.6)}
  :root[data-theme="dark"] .splash-card{background:linear-gradient(180deg,#15283D,#0E1B2A);border-top:3px solid var(--yes);box-shadow:0 0 40px rgba(65,162,215,.25),0 20px 50px rgba(0,0,0,.6)}
  :root[data-theme="dark"] .gal-add{border:1.5px solid rgba(200,210,225,.35);background:linear-gradient(180deg,#1A2B3F,#101C2A)}
  :root[data-theme="dark"] .cam{background:#20262E;border-color:#0F1C2B}
@@ -235,7 +230,6 @@ h2{margin:0;font-size:20px;font-weight:700}
 .pick.shut .post-head{border-radius:10px 10px 0 0}
 .conv-peek{margin:0;font-size:14px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (prefers-reduced-motion:reduce){.chev{transition:none}}
-.ask-btn.on{box-shadow:inset 0 0 0 2px var(--brand)}
 .act-btn.on{color:var(--ink);background:var(--hover)}
 .conn-actions .link.on{color:var(--ink);text-decoration:underline}
 .info-btn{background:transparent;color:var(--muted);padding:2px 0;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px;vertical-align:middle;align-self:flex-start}
@@ -359,6 +353,22 @@ input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--b
 .lb.zoom{z-index:200;background:#000}
 .lb.zoom .lb-top{color:#FFFFFF}
 .lb.zoom .lb-stage img{width:100%;height:100%;object-fit:contain}
+.ask-box{display:flex;flex-direction:column;gap:10px;background:var(--brand-soft);border:1.5px solid var(--brand);border-radius:10px;padding:12px 12px 10px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.ask-head{display:flex;gap:10px;align-items:flex-start;color:var(--brand)}
+.ask-head svg{flex:none;margin-top:2px}
+.ask-box .cmt-input{gap:6px}
+.ask-box .pill-input.q-in{background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--brand)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ask-box{background:linear-gradient(180deg,#16314F,#0F2238);border-color:rgba(65,162,215,.75)}
+:root:not([data-theme="light"]) .ask-box .pill-input.q-in{background:#0B1828;box-shadow:inset 0 0 0 1.5px rgba(65,162,215,.75)}}
+:root[data-theme="dark"] .ask-box{background:linear-gradient(180deg,#16314F,#0F2238);border-color:rgba(65,162,215,.75)}
+:root[data-theme="dark"] .ask-box .pill-input.q-in{background:#0B1828;box-shadow:inset 0 0 0 1.5px rgba(65,162,215,.75)}
+.ask-foot{display:flex;gap:6px;align-items:center;margin:0;font-size:13px;color:var(--muted)}
+.blk-row{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:2px}
+.blk-pill{display:inline-flex;align-items:center;gap:6px;background:transparent;color:var(--warn);font-weight:700;font-size:14px;padding:7px 18px;border-radius:999px;box-shadow:inset 0 0 0 1.5px var(--warn)}
+.blk-pill:hover{background:rgba(229,138,111,.12)}
+.blk-note{display:flex;align-items:center;gap:6px;text-align:center;margin:0}
+.blk-note svg{flex:none}
+:root .card.profile.profile{border:2px solid #D4B27A;outline:2px solid #D4B27A;outline-offset:4px;border-radius:14px;margin:6px}
 </style>
 
 <div class="app" id="app"></div>
@@ -418,7 +428,7 @@ async function syncNow(write){if(!SY.bin||!SY.key||(!write&&syncing))return;sync
 const pull=()=>syncNow(false), push=()=>syncNow(true);
 const schedulePush=()=>{if(!SY.bin||!SY.key)return;clearTimeout(pushTimer);pushTimer=setTimeout(push,1200);};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull();});
-const APP_VERSION="1.05";let NEW_VER="";
+const APP_VERSION="1.08";let NEW_VER="";
 async function checkVersion(){if(APP_VERSION==="dev"||!/^https?:$/.test(location.protocol))return;
   try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const v=String((await r.json()).version||"");
     if(v&&parseFloat(v)>parseFloat(APP_VERSION)&&NEW_VER!==v){NEW_VER=v;render(true);}}catch(e){}}
@@ -844,13 +854,13 @@ function requests(){const u=me();const inb=inbox(u.id),conf=toConfirm(u.id);
     <p class="quiet" style="text-align:center">Saying yes shares your photo. ${info("yes","")}</p>${infoBox("yes","They'll check it's really you. No one's identity is checked, so only say yes if you want to hear from them.")}
     ${(()=>{const k=p.id+"|"+u.id,t=qThread(k),mine=t.filter(m=>m.from===u.id).length,waiting=t.length&&t[t.length-1].from===u.id;
       let q=qaView(k,u.id);
-      const askBtn=`<button class="ask-btn${S.qOpen===k?" on":""}" data-act="qOpen" data-k="${esc(k)}" aria-expanded="${S.qOpen===k}">${ic("chat",20)}<span class="ask-txt"><b>Ask them a specific question first to confirm their identity</b><small>${S.qOpen===k?"Tap again to close":"Something you both remember, not something on social media"}</small></span></button>`;
-      if(!t.length)q+=askBtn;
-      if(S.qOpen===k||t.length)q+=qaInput(k,"qAsk",!t.length?"Ask something only they would know…":waiting?"Add something…":"Reply or ask something else…")+`<p class="fine">${waiting?`${ic("chat",14)} Waiting for their answer.`:`They won't see your name or photo yet.`}</p>`;
-      return q;})()}
+      if(!t.length)return q+`<div class="ask-box"><div class="ask-head">${ic("chat",20)}<span class="ask-txt"><b>Ask them a specific question first to confirm their identity</b><small>Something you both remember, not something on social media</small></span></div>
+        ${qaInput(k,"qAsk","")}<p class="ask-foot">${ic("lock",13)} They won't see your name or photo yet.</p></div>`;
+      return q+qaInput(k,"qAsk",waiting?"Add something…":"Reply or ask something else…")+`<p class="fine">${waiting?`${ic("chat",14)} Waiting for their answer.`:`They won't see your name or photo yet.`}</p>`;})()}
     ${hasPhoto(u)?`<div class="btns"><button class="primary" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="accepted">Yes, I know them</button><button class="grey" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="ignored">Not now</button></div>`
       :`${photoNotice("Add a profile photo first, so they can check it's really you.","Add photo")}<div class="btns"><button class="grey" data-act="decide" data-k="${esc(p.id)}|${esc(u.id)}" data-v="ignored">Not now</button></div>`}
-    <div class="toggle"><p class="quiet">${ic("lock",14)} They're never told.</p><button class="link warn" data-act="block" data-id="${esc(o.id)}">Block</button></div></article>`;}).join("");
+    <div class="blk-row"><button class="blk-pill" data-act="block" data-id="${esc(o.id)}">${ic("shield",16)}Block</button>
+      <p class="quiet blk-note">${ic("lock",14)} Not now and Block are private. They're never told.</p></div></article>`;}).join("");
   h+=decidedLists(u);
   return h;}
 const shortDate=t=>t?new Date(t).toLocaleDateString(undefined,{month:"short",day:"numeric"}):"";
@@ -1107,7 +1117,6 @@ function act(a,el){const u=me();
   else if(a==="appUpdate"){location.replace(location.pathname+"?v="+encodeURIComponent(NEW_VER));return;}
   else if(a==="yesGo"||a==="yesClose"){S.yesNote=null;if(a==="yesGo"){S.tab="connections";window.scrollTo(0,0);}}
   else if(a==="splashGo"||a==="splashClose"){S.splashed=S.splashed||{};const l=S.splashed[u.id]=S.splashed[u.id]||[];if(!l.includes(el.dataset.pk))l.push(el.dataset.pk);if(a==="splashGo")S.tab="connections";}
-  else if(a==="qOpen"){if(S.qOpen===el.dataset.k){S.qOpen=null;S.qErr=null;save();render();return;}S.qOpen=el.dataset.k;S.qErr=null;save();render();const i=document.getElementById(qid(el.dataset.k));if(i)i.focus();return;}
   else if(a==="qAsk"||a==="qReply"){const k=el.dataset.k,inp=document.getElementById(qid(k)),text=(inp&&inp.value||"").trim();S.qErr=null;
     if(text){const kinds=detect(text).map(c=>c[1]);
       if(kinds.length){S.qErr={k,msg:"Please take out "+listWords(kinds)+". That can be shared once you're connected."};save();render();const i=document.getElementById(qid(k));if(i){i.value=text;i.focus();}return;}
