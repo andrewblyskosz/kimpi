@@ -272,7 +272,7 @@ h2{margin:0;font-size:20px;font-weight:700}
 .intro>svg{flex:none;color:var(--brand);margin-top:2px}
 .intro .col-tight{display:flex;flex-direction:column;gap:4px;font-size:14px}
 .hist-miss{grid-column:1/-1;display:flex;gap:4px;align-items:center}
-.hist-num{grid-column:1/-1;margin:0;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--brand)}
+.hist-num{grid-column:1/-1;justify-self:start;margin:0;font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#1A140A;background:var(--gold);padding:4px 12px;border-radius:999px;box-shadow:0 1px 2px rgba(0,0,0,.2)}
 .kw-left{font-size:12px;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0}
 .kw-left.over{color:var(--warn)}
 .ex-list{display:flex;flex-direction:column;gap:8px}
@@ -347,6 +347,18 @@ input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--b
 .pk2-acts button:hover,.pk2-acts button.on{color:#FFFFFF;background:rgba(255,255,255,.07)}
 .pk2-acts .pk2-rm{margin-left:auto}
 .list-head{margin:6px 2px -2px;font-size:18px;color:var(--head)}
+.pk2-hook{display:flex;flex-direction:column;gap:10px;border-top:1px solid rgba(195,211,227,.18);padding:12px 16px 14px}
+.pk2-hook p{display:flex;gap:10px;align-items:flex-start;margin:0;font-size:14px;line-height:1.4;color:#DCE6EF}
+.pk2-hook p svg{flex:none;color:#D4B27A;margin-top:1px}
+.pk2-hook b{color:#FFFFFF}
+.pk2-hook .fine{display:block;color:#A9BBCD;margin:0}
+.pk2-inv{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;background:transparent;color:#E8D3A2;font-weight:700;font-size:14px;padding:8px 14px;border-radius:999px;box-shadow:inset 0 0 0 1.5px #D4B27A}
+.pk2-inv:hover{background:rgba(212,178,122,.12)}
+.inv-box{width:100%;box-sizing:border-box;font:inherit;font-size:13px;border-radius:8px;padding:8px;background:#0B1828;color:#DCE6EF;border:1px solid rgba(195,211,227,.25)}
+.av[data-uid]{cursor:zoom-in}
+.lb.zoom{z-index:200;background:#000}
+.lb.zoom .lb-top{color:#FFFFFF}
+.lb.zoom .lb-stage img{width:100%;height:100%;object-fit:contain}
 </style>
 
 <div class="app" id="app"></div>
@@ -374,7 +386,7 @@ let S;
 try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){}
 if(!S||!S.users)S=seed();
 S.gone=S.gone||{users:[],picks:[]};
-S.viewing=null;
+S.viewing=null;S.zoom=null;S.inviteMsg=null;
 S.tab="me";
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 
@@ -406,7 +418,7 @@ async function syncNow(write){if(!SY.bin||!SY.key||(!write&&syncing))return;sync
 const pull=()=>syncNow(false), push=()=>syncNow(true);
 const schedulePush=()=>{if(!SY.bin||!SY.key)return;clearTimeout(pushTimer);pushTimer=setTimeout(push,1200);};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull();});
-const APP_VERSION="1.03";let NEW_VER="";
+const APP_VERSION="1.05";let NEW_VER="";
 async function checkVersion(){if(APP_VERSION==="dev"||!/^https?:$/.test(location.protocol))return;
   try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const v=String((await r.json()).version||"");
     if(v&&parseFloat(v)>parseFloat(APP_VERSION)&&NEW_VER!==v){NEW_VER=v;render(true);}}catch(e){}}
@@ -530,7 +542,16 @@ const WIDE={reach:38};
 const ic=(n,s=20)=>`<svg width="${Math.round(s*(WIDE[n]||24)/24)}" height="${s}" viewBox="0 0 ${WIDE[n]||24} 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`;
 const safePhoto=p=>typeof p==="string"&&/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(p)?p:"";
 function av(u,s=40){const ini=parts(u.name||"");const t=((ini.first[0]||"?")+(ini.last[0]||"")).toUpperCase();const ph=safePhoto(u.photo);
-  return `<span class="av" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.38)}px;background:hsl(${(+u.hue||200)%360} 42% 40%)">${ph?`<img src="${ph}" alt="">`:esc(t)}</span>`;}
+  return `<span class="av"${ph&&u.id?` data-uid="${esc(u.id)}"`:""} style="width:${s}px;height:${s}px;font-size:${Math.round(s*.38)}px;background:hsl(${(+u.hue||200)%360} 42% 40%)">${ph?`<img src="${ph}" alt="">`:esc(t)}</span>`;}
+/* how many people from a place have joined: only shown at COUNT_MIN or more, so no one can be singled out */
+const COUNT_MIN=5;
+const placeLabel=p=>(placeParts(p.place)[0]||p.place||"").trim();
+function placeCount(p){return Object.values(S.users).filter(x=>x.id!==p.owner&&x.joined&&!x.paused&&!isMinor(x)&&(x.history||[]).filter(histReady).some(h=>placesMatch(p.place,h.place)&&cityMatch(p.city,h.city))).length;}
+const appLink=()=>/^https?:$/.test(location.protocol)&&!/claude|usercontent/.test(location.host)?location.origin+location.pathname:"https://andrewblyskosz.github.io/kimpi/";
+function hook(p){if(!p.city)return "";const pl=esc(placeLabel(p)),ct=esc(p.city),n=placeCount(p),F=esc(p.name.split(" ")[0]||"them");
+  return `<div class="pk2-hook"><p>${ic("users",18)}<span>${n>=COUNT_MIN?`<b>${n} people</b> from ${pl}, ${ct} are on ${KITW}.`:`Be one of the first from ${pl}, ${ct} on ${KITW}.`} The more who join, the better your chances of finding ${F}.</span></p>
+    <button class="pk2-inv" data-act="invite" data-id="${esc(p.id)}">${ic("send",16)}Invite someone from ${pl}</button>
+    ${S.inviteMsg&&S.inviteMsg.id===p.id?`<p class="fine">${esc(S.inviteMsg.txt)}</p>${S.inviteMsg.box?`<textarea class="inv-box" readonly rows="4">${esc(S.inviteMsg.box)}</textarea>`:""}`:""}</div>`;}
 const ghost=(s=40)=>`<span class="av ghost" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.4)}px">?</span>`;
 const years=h=>{if(!hasYears(h))return "years not given";const [a,b]=histSpan(h);return a===b?`${a}`:`${a}–${b}`;};
 const where=x=>esc(x.place)+(x.city?", "+esc(x.city):"");
@@ -581,6 +602,10 @@ function galleryCard(u){const g=u.gallery||[];
       ${g.length<MAX_GAL?`<label class="gal-add" for="gal_add">${ic("plus",24)}<span>Add photos</span></label>`:""}</div>
     <input id="gal_add" type="file" accept="image/*" multiple hidden>
     ${S.galMsg?`<p class="err">${esc(S.galMsg)}</p>`:""}</div>`;}
+function zoomView(){const z=S.zoom;const o=z&&S.users[z];const ph=o&&safePhoto(o.photo);if(!ph)return "";
+  return `<div class="lb zoom" role="dialog" aria-modal="true" aria-label="Photo of ${esc(o.name)}" data-act="closeZoom">
+    <div class="lb-top"><div class="who"><b>${esc(o.name||"")}</b></div><button class="icon-btn lb-x" data-act="closeZoom" aria-label="Close photo">${ic("x",26)}</button></div>
+    <div class="lb-stage"><img src="${ph}" alt="Photo of ${esc(o.name)}"></div></div>`;}
 function viewer(){const v=S.viewing;if(!v)return "";const o=S.users[v.uid];const g=galleryOf(o);
   if(!o||!g.length||!canSee(S.current,o.id))return "";const i=Math.max(0,Math.min(g.length-1,v.i));
   return `<div class="lb" role="dialog" aria-modal="true" aria-label="Photos of ${esc(o.name)}">
@@ -613,7 +638,7 @@ function render(bg){
       <button class="bar-me" data-tab="me" aria-label="Your profile">${av(u,38)}</button></div>
     <nav class="tabs" role="tablist">${tabs.map(([k,l,i])=>`<button role="tab" data-tab="${k}" aria-selected="${S.tab===k}" aria-label="${l}"><span class="ti">${ic(i,24)}${k==="connections"&&newCount?`<span class="badge">${newCount}</span>`:""}${k==="people"&&qCount?`<span class="badge">${qCount}</span>`:""}${k==="requests"&&reqCount?`<span class="badge">${reqCount}</span>`:""}</span><span class="tl">${l}</span></button>`).join("")}</nav>
   </div></header>
-  <main class="main"><div class="col">${body}</div>${footer()}</main>${viewer()}${splashC?splash(splashC):S.yesNote&&S.users[S.yesNote]?yesNote(S.users[S.yesNote]):""}`;
+  <main class="main"><div class="col">${body}</div>${footer()}</main>${viewer()}${zoomView()}${splashC?splash(splashC):S.yesNote&&S.users[S.yesNote]?yesNote(S.users[S.yesNote]):""}`;
   if(bg){let meDirty=false;
     for(const [id,v] of keep){const el=document.getElementById(id);if(el&&el.value!==v){el.value=v;if(ME_FIELDS.includes(id))meDirty=true;}}
     if(meDirty)markDirty("me");
@@ -797,6 +822,7 @@ function people(){const u=me();const mine=S.picks.filter(p=>p.owner===u.id&&!pic
     ${S.editPick===p.id?editForm(p):""}${S.confirmDel===p.id?`<div class="notice">${ic("lock",18)}<span>This spot stays locked for 30 days.</span><div class="btns"><button class="primary" data-act="cancelDel">Keep</button><button class="grey" data-act="delPick" data-id="${esc(p.id)}">Remove</button></div></div>`:""}`.trim();return `<article class="card pk2">
     <div class="pk2-head"><span class="pk2-av">${ic("user",26)}</span><div class="pk2-who"><b>${esc(p.name)}</b><span class="pk2-meta">${where(p)} · <span class="yrs">${esc(years(p))}</span></span></div><span class="status ${st.cls}">${esc(st.txt)}</span></div>
     ${body?`<div class="pk2-body">${body}</div>`:""}
+    ${hook(p)}
     ${st.cls==="s-wait"?`<p class="pk2-note">${ic("lock",15)}<span>Private until ${esc(p.name.split(" ")[0]||"they")} joins and your details match.</span></p>`:""}
     <div class="pk2-acts">${canEdit(p)?`<button class="${S.editPick===p.id?"on":""}" aria-expanded="${S.editPick===p.id}" data-act="editPick" data-id="${esc(p.id)}">${ic("edit",18)}Edit</button>`:""}<button class="pk2-rm${S.confirmDel===p.id?" on":""}" aria-expanded="${S.confirmDel===p.id}" data-act="askDel" data-id="${esc(p.id)}">${ic("trash",18)}Remove</button></div></article>`;}).join("")
   :`<div class="card empty">${ic("search",32)}<b style="color:var(--ink)">No one on your list yet</b><span>Tap "Who do you want to connect with?" to add your first person.</span></div>`}`;}
@@ -1010,6 +1036,13 @@ function act(a,el){const u=me();
   else if(a==="toggleTools"){S.tools=!S.tools;save();render();return;}
   else if(a==="viewPhotos"){const id=el.dataset.id;if(canSee(S.current,id))S.viewing={uid:id,i:+el.dataset.i||0};render();return;}
   else if(a==="closeView"){S.viewing=null;render();return;}
+  else if(a==="invite"){const p=S.picks.find(x=>x.id===el.dataset.id);if(!p)return;
+    const text=`I'm on kimpi, a private way to say hello again to people from your past. Were you at ${placeLabel(p)} in ${p.city}? Join here: ${appLink()}`;
+    const done=(txt,box)=>{S.inviteMsg={id:p.id,txt,box};render(true);};
+    if(navigator.share){navigator.share({text}).catch(()=>{});return;}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>done("Invite copied. Paste it into a text, email or post."),()=>done("Copy this and send it:",text));return;}
+    done("Copy this and send it:",text);return;}
+  else if(a==="closeZoom"){S.zoom=null;render(true);return;}
   else if(a==="viewStep"||a==="viewAt"){if(S.viewing){const n=galleryOf(S.users[S.viewing.uid]).length;const i=a==="viewAt"?+el.dataset.i:S.viewing.i+(+el.dataset.d);S.viewing.i=Math.max(0,Math.min(n-1,i));}render();return;}
   else if(a==="delGal"){const g=u.gallery||[];g.splice(+el.dataset.i,1);u.gallery=g;S.galMsg="";}
   else if(a==="compose"){S.compose=!(S.compose||S.err);S.err="";if(!S.compose)S.draft={};save();render();if(S.compose)setTimeout(()=>{const e=document.getElementById("np_name");if(e)e.focus();},0);return;}
@@ -1168,7 +1201,10 @@ function merge(d){
   S.fresh=false;
   return [nu,np];}
 
-document.addEventListener("click",e=>{const t=e.target.closest("[data-act],[data-tab]");if(!t)return;
+document.addEventListener("click",e=>{
+  const pic=e.target.closest(".av[data-uid]");
+  if(pic&&pic.querySelector("img")&&!e.target.closest(".bar-me,.lb")){e.preventDefault();e.stopPropagation();S.zoom=pic.dataset.uid;render(true);return;}
+  const t=e.target.closest("[data-act],[data-tab]");if(!t)return;
   if(t.dataset.tab){S.qOpen=null;S.qErr=null;if(t.dataset.tab==="terms"&&S.tab!=="terms"){S.termsFrom=S.tab;S.termsY=window.scrollY;}S.tab=t.dataset.tab;S.err="";S.flash="";S.connPanel=null;S.pendingSend=null;save();render();const sec=t.dataset.sec&&document.getElementById(t.dataset.sec);if(sec)sec.scrollIntoView();else if(t.dataset.tab==="terms"||t.dataset.tab==="example")window.scrollTo(0,0);return;}
   act(t.dataset.act,t);});
 document.addEventListener("keydown",e=>{if(e.key==="Enter"&&e.target.id&&e.target.id.startsWith("m_")){const b=e.target.parentElement.querySelector("[data-act=send]");if(b)b.click();}});
@@ -1219,7 +1255,7 @@ document.getElementById("cropSave").addEventListener("click",()=>{if(!CR)return;
   closeCrop();save();render();schedulePush();});
 cropEl.addEventListener("click",e=>{if(e.target===cropEl)closeCrop();});
 
-document.addEventListener("keydown",e=>{if(!S.viewing)return;
+document.addEventListener("keydown",e=>{if(S.zoom&&e.key==="Escape"){act("closeZoom");return;}if(!S.viewing)return;
   if(e.key==="Escape")act("closeView");else if(e.key==="ArrowLeft")act("viewStep",{dataset:{d:"-1"}});else if(e.key==="ArrowRight")act("viewStep",{dataset:{d:"1"}});});
 
 /* year boxes: the number pad types digits even with Num Lock off (otherwise 3 = Page Down, 9 = Page Up, 2/8 = arrows) */
