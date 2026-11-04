@@ -376,6 +376,9 @@ input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--b
 .hist-row{border:1.5px solid #D4B27A;border-radius:12px;padding:12px}
 .hist-row+.hist-row{border-top:1.5px solid #D4B27A;padding-top:12px}
 .hist-row .hp,.hist-row .hc{grid-column:1/-1}
+:root .card.about-card.about-card{background:linear-gradient(180deg,#DCE8F6 0%,#CFDFF1 100%)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .card.about-card.about-card{background:linear-gradient(180deg,#2A4D7E 0%,#203E66 100%)}}
+:root[data-theme="dark"] .card.about-card.about-card{background:linear-gradient(180deg,#2A4D7E 0%,#203E66 100%)}
 </style>
 
 <div class="app" id="app"></div>
@@ -445,7 +448,7 @@ async function syncNow(write){if(!SY.bin||!SY.key||(!write&&syncing))return;sync
 const pull=()=>syncNow(false), push=()=>syncNow(true);
 const schedulePush=()=>{if(!SY.bin||!SY.key)return;clearTimeout(pushTimer);pushTimer=setTimeout(push,1200);};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull();});
-const APP_VERSION="1.14";let NEW_VER="";
+const APP_VERSION="1.15";let NEW_VER="";
 async function checkVersion(){if(APP_VERSION==="dev"||!/^https?:$/.test(location.protocol))return;
   try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const v=String((await r.json()).version||"");
     if(v&&parseFloat(v)>parseFloat(APP_VERSION)&&NEW_VER!==v){NEW_VER=v;render(true);}}catch(e){}}
@@ -1009,7 +1012,7 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
 
   ${galleryCard(u)}
 
-  <div class="card"><h2 class="ct ct-or">About you</h2>
+  <div class="card about-card"><h2 class="ct ct-or">About you</h2>
     <label class="f" for="me_name">Full name<input id="me_name" value="${esc(u.name)}" placeholder="First and last name"></label>
     ${u.name&&!parts(u.name).last?`<p class="err">${ic("shield",14)} Add your last name. People search for first and last names, so without it nobody can find you.</p>`:""}
     <label class="f" for="me_past">Maiden name, past names and nicknames<input id="me_past" value="${esc(past.join(", "))}" placeholder="Maiden name, nickname, old spelling"></label>
