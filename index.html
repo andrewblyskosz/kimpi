@@ -369,6 +369,13 @@ input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--b
 .blk-note{display:flex;align-items:center;gap:6px;text-align:center;margin:0}
 .blk-note svg{flex:none}
 :root .card.profile.profile{border:2px solid #D4B27A;outline:2px solid #D4B27A;outline-offset:4px;border-radius:14px;margin:6px}
+.seg{display:flex;gap:4px;background:var(--sunk);border-radius:999px;padding:4px}
+.seg button{flex:1;background:transparent;color:var(--muted);font-weight:700;font-size:14px;padding:9px 6px;border-radius:999px}
+.seg button.on{background:var(--gold);color:#1A140A;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.hist{gap:12px}
+.hist-row{border:1.5px solid #D4B27A;border-radius:12px;padding:12px}
+.hist-row+.hist-row{border-top:1.5px solid #D4B27A;padding-top:12px}
+.hist-row .hp,.hist-row .hc{grid-column:1/-1}
 </style>
 
 <div class="app" id="app"></div>
@@ -385,6 +392,11 @@ input[type=range]{padding:0;border:0;background:transparent;accent-color:var(--b
 <script>
 /* ---------- data ---------- */
 const KEY="kiml.demo.v1";
+/* appearance is per device and never synced: dark unless the person picks Match phone or Light */
+const THEME_KEY="kiml.theme.v1";
+const getTheme=()=>{try{const t=localStorage.getItem(THEME_KEY);return t==="light"||t==="auto"?t:"dark";}catch(e){return "dark";}};
+const applyTheme=t=>{if(t==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;};
+applyTheme(getTheme());
 const blankPerson=(id,name,hue)=>({id,name,past:[],history:[{place:"",city:"",from:"",to:""}],joined:true,paused:false,never:[],blocked:[],photo:"",hue});
 const seed=()=>({
   current:"u_andrew", tab:"me", v:2,
@@ -433,7 +445,7 @@ async function syncNow(write){if(!SY.bin||!SY.key||(!write&&syncing))return;sync
 const pull=()=>syncNow(false), push=()=>syncNow(true);
 const schedulePush=()=>{if(!SY.bin||!SY.key)return;clearTimeout(pushTimer);pushTimer=setTimeout(push,1200);};
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")pull();});
-const APP_VERSION="1.10";let NEW_VER="";
+const APP_VERSION="1.14";let NEW_VER="";
 async function checkVersion(){if(APP_VERSION==="dev"||!/^https?:$/.test(location.protocol))return;
   try{const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;const v=String((await r.json()).version||"");
     if(v&&parseFloat(v)>parseFloat(APP_VERSION)&&NEW_VER!==v){NEW_VER=v;render(true);}}catch(e){}}
@@ -976,6 +988,9 @@ function aboutTab(){return `<div class="card intro">${ic("info",22)}<div class="
        `Up to ${MAX_GAL} extra photos, seen only by people you've reconnected with.`,
        `Up to ${MAX_PICKS} people per list, and removed names lock their spot for 30 days.`,
        "Blocking and a pause switch are always on hand."].map(t=>`<li>${ic("shield",18)}<span>${t}</span></li>`).join("")}</ul></div>
+  <div class="card"><h2 class="ct">Appearance</h2>
+    <div class="seg" role="radiogroup" aria-label="Appearance">${[["auto","Match phone"],["light","Light"],["dark","Dark"]].map(([k,l])=>`<button role="radio" aria-checked="${getTheme()===k}" class="${getTheme()===k?"on":""}" data-act="setTheme" data-v="${k}">${l}</button>`).join("")}</div>
+    <p class="fine">Only changes this device.</p></div>
   <div class="card"><h2 class="ct">The fine print</h2>
     <div class="conn-actions"><button class="link inline" data-tab="terms">Terms of use</button><button class="link inline" data-tab="terms" data-sec="t-safety">Safety tips</button><button class="link inline" data-tab="terms" data-sec="t-privacy">Privacy</button></div>
     <p class="fine ver">${APP_VERSION==="dev"?"Preview copy":"Version "+APP_VERSION}</p></div>`;}
@@ -1014,7 +1029,7 @@ function meTab(){const u=me();const past=(u.past||[]).filter(Boolean);
   <div class="card"><div class="sec-h"><h2 class="ct ct-or">Where people knew you</h2><span class="cnt">${(u.history||[]).length} of ${MAX_HIST} places used</span></div>
     <button class="link inline ex-top" data-tab="example">See an example</button>
     <div class="hist">${(u.history||[]).map((h,i)=>`<div class="hist-row"><p class="hist-num">Place ${i+1}</p>
-      <label class="f" for="h_place_${i}">Place and details<input id="h_place_${i}" data-h="${i}" data-f="place" value="${esc(h.place)}" placeholder="e.g. Humber College, film program"><span class="${kwClass(h.place)}" id="kw_h_${i}" aria-live="polite">${kwLeft(h.place)}</span></label>
+      <label class="f hp" for="h_place_${i}">Place and details<input id="h_place_${i}" data-h="${i}" data-f="place" value="${esc(h.place)}" placeholder="e.g. Humber College, film program"><span class="${kwClass(h.place)}" id="kw_h_${i}" aria-live="polite">${kwLeft(h.place)}</span></label>
       <label class="f hc" for="h_city_${i}">City or town<input id="h_city_${i}" data-h="${i}" data-f="city" value="${esc(h.city)}" placeholder="e.g. Toronto"></label>
       <label class="f" for="h_from_${i}">From (optional)<input id="h_from_${i}" data-h="${i}" data-f="from" class="yr" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Year" value="${esc(h.from)}"></label>
       <label class="f" for="h_to_${i}">To<input id="h_to_${i}" data-h="${i}" data-f="to" class="yr" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Year" value="${esc(h.to)}"></label>
@@ -1057,6 +1072,7 @@ function act(a,el){const u=me();
     if(navigator.share){navigator.share({text}).catch(()=>{});return;}
     if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>done("Invite copied. Paste it into a text, email or post."),()=>done("Copy this and send it:",text));return;}
     done("Copy this and send it:",text);return;}
+  else if(a==="setTheme"){const v=el.dataset.v;try{localStorage.setItem(THEME_KEY,v);}catch(e){}applyTheme(v);render(true);return;}
   else if(a==="closeZoom"){S.zoom=null;render(true);return;}
   else if(a==="viewStep"||a==="viewAt"){if(S.viewing){const n=galleryOf(S.users[S.viewing.uid]).length;const i=a==="viewAt"?+el.dataset.i:S.viewing.i+(+el.dataset.d);S.viewing.i=Math.max(0,Math.min(n-1,i));}render();return;}
   else if(a==="delGal"){const g=u.gallery||[];g.splice(+el.dataset.i,1);u.gallery=g;S.galMsg="";}
